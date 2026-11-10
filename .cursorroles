@@ -16,3 +16,7 @@
 - Nomes de tabelas e colunas no banco de dados devem ser em `snake_case` e em português (pt-BR).
 - Entidades de domínio, DTOs e atributos devem ser escritos em português para refletir a regra de negócio local.
 - Interfaces de portas de saída devem usar o sufixo `Port` ou `Repository` dentro do pacote de domínio.
+
+## Java & Maven
+- Maven location: C:\Users\Thinkpad\code\apache-maven-3.10.0
+- Java location: C:\Program Files\Eclipse Adoptium\jdk-25.0.5.8-hotspot

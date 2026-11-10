@@ -32,9 +32,13 @@ jobs:
       - name: Executar build e testes
         run: mvn -B clean verify
 
+      # GITHUB_TOKEN só cria PR se o repositório permitir:
+      # Settings > Actions > General > Workflow permissions
+      # > Allow GitHub Actions to create and approve pull requests
+      # Alternativa: secret PR_CREATE_TOKEN (PAT com pull_requests:write).
       - name: Criar ou atualizar Pull Request para develop
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PR_CREATE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           BRANCH="${{ github.ref_name }}"
           TITLE="feat: ${BRANCH}"
@@ -47,10 +51,19 @@ jobs:
           EOF
           )"
 
-          EXISTING="$(gh pr list --base develop --head "${BRANCH}" --json number --jq '.[0].number // empty')"
-          if [ -n "${EXISTING}" ]; then
-            gh pr edit "${EXISTING}" --title "${TITLE}" --body "${BODY}"
-            echo "PR #${EXISTING} atualizado."
-          else
-            gh pr create --base develop --head "${BRANCH}" --title "${TITLE}" --body "${BODY}"
+          criar_ou_atualizar() {
+            EXISTING="$(gh pr list --base develop --head "${BRANCH}" --json number --jq '.[0].number // empty')"
+            if [ -n "${EXISTING}" ]; then
+              gh pr edit "${EXISTING}" --title "${TITLE}" --body "${BODY}"
+              echo "PR #${EXISTING} atualizado."
+            else
+              gh pr create --base develop --head "${BRANCH}" --title "${TITLE}" --body "${BODY}"
+            fi
+          }
+
+          if ! criar_ou_atualizar; then
+            echo "::error::O GITHUB_TOKEN não pode abrir PR neste repositório."
+            echo "Habilite: Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests"
+            echo "Ou cadastre o secret PR_CREATE_TOKEN com um PAT (scope repo / pull_requests:write)."
+            exit 1
           fi
