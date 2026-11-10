@@ -1,12 +1,11 @@
 package com.tassisfernando.chamegoapi;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
 class ChamegoApiApplicationTests {
 
     @Test
-    void contextLoads() {
+    void naoDeveSubirContextoSpringNosTestesUnitarios() {
+        // os testes de domínio, casos de uso e adapters usam JUnit 5 + Mockito
     }
 }

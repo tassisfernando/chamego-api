@@ -1,0 +1,56 @@
+name: CI Feature PR
+
+on:
+  push:
+    branches:
+      - "feature/**"
+
+concurrency:
+  group: ci-feature-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-pr:
+    name: Build, testes e PR para develop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Executar build e testes
+        run: mvn -B clean verify
+
+      - name: Criar ou atualizar Pull Request para develop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          TITLE="feat: ${BRANCH}"
+          BODY="$(cat <<EOF
+          ## CI
+
+          Build e testes unitários passaram em \`${{ github.sha }}\`.
+
+          Este PR foi aberto/atualizado automaticamente pelo workflow \`ci-feature-pr\` após \`mvn clean verify\`.
+          EOF
+          )"
+
+          EXISTING="$(gh pr list --base develop --head "${BRANCH}" --json number --jq '.[0].number // empty')"
+          if [ -n "${EXISTING}" ]; then
+            gh pr edit "${EXISTING}" --title "${TITLE}" --body "${BODY}"
+            echo "PR #${EXISTING} atualizado."
+          else
+            gh pr create --base develop --head "${BRANCH}" --title "${TITLE}" --body "${BODY}"
+          fi
