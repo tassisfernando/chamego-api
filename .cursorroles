@@ -1,0 +1,22 @@
+# Java & Spring Boot Hexagonal Architecture Rules
+
+## Tech Stack
+- Java 25 (utilize Records, Sealed Classes, Pattern Matching e Virtual Threads quando aplicável).
+- Spring Boot 3.x+.
+- Flyway para migrações de banco de dados (`src/main/resources/db/migration`).
+- MapStruct para conversão de DTOs e Entidades.
+- Bean Validation (`jakarta.validation`).
+
+## Architecture & Code Structure (Hexagonal / Ports & Adapters)
+- **Domain Layer (`domain`)**: Contém apenas regras de negócio, entidades puras e interfaces de repositórios/portas. NUNCA importe anotações do Spring ou Lombok na camada de domínio.
+- **Application Layer (`application`)**: Implementação dos casos de uso (Use Cases / Services). Gerencia transações e orquestra o domínio.
+- **Infrastructure Layer (`infrastructure`)**: Implementação de adaptadores (Controllers REST, Entidades Spring Data JPA, Repositórios JPA, Mappers, configurações).
+
+## Naming & Conventions
+- Nomes de tabelas e colunas no banco de dados devem ser em `snake_case` e em português (pt-BR).
+- Entidades de domínio, DTOs e atributos devem ser escritos em português para refletir a regra de negócio local.
+- Interfaces de portas de saída devem usar o sufixo `Port` ou `Repository` dentro do pacote de domínio.
+
+## Java & Maven
+- Maven location: C:\Users\Thinkpad\code\apache-maven-3.10.0
+- Java location: C:\Program Files\Eclipse Adoptium\jdk-25.0.5.8-hotspot
