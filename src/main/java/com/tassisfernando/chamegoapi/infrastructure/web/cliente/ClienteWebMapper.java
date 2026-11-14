@@ -15,5 +15,6 @@ public interface ClienteWebMapper {
     @Mapping(target = "dataCadastro", expression = "java(cliente.dataCadastro())")
     @Mapping(target = "dataNascimento", expression = "java(cliente.dataNascimento())")
     @Mapping(target = "statusCupom", expression = "java(cliente.statusCupom())")
+    @Mapping(target = "ativo", expression = "java(cliente.ativo())")
     ClienteResposta paraResposta(Cliente cliente);
 }

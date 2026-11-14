@@ -18,6 +18,7 @@ public final class Cliente {
     private LocalDate dataNascimento;
     private StatusCupom statusCupom;
     private String observacao;
+    private boolean ativo;
 
     private Cliente(
             UUID id,
@@ -28,7 +29,8 @@ public final class Cliente {
             LocalDate dataCadastro,
             LocalDate dataNascimento,
             StatusCupom statusCupom,
-            String observacao) {
+            String observacao,
+            boolean ativo) {
         this.id = id;
         this.nome = exigirNome(nome);
         this.telefone = telefone;
@@ -38,6 +40,7 @@ public final class Cliente {
         this.dataNascimento = dataNascimento;
         this.statusCupom = statusCupom == null ? StatusCupom.NAO_DEFINIDO : statusCupom;
         this.observacao = observacao;
+        this.ativo = ativo;
     }
 
     public static Cliente novo(
@@ -55,7 +58,8 @@ public final class Cliente {
                 LocalDate.now(),
                 dataNascimento,
                 StatusCupom.NAO_DEFINIDO,
-                null);
+                null,
+                true);
     }
 
     public static Cliente reconstituir(
@@ -67,17 +71,36 @@ public final class Cliente {
             LocalDate dataCadastro,
             LocalDate dataNascimento,
             StatusCupom statusCupom,
-            String observacao) {
+            String observacao,
+            boolean ativo) {
         return new Cliente(
-                id, nome, telefone, cidade, estado, dataCadastro, dataNascimento, statusCupom, observacao);
+                id,
+                nome,
+                telefone,
+                cidade,
+                estado,
+                dataCadastro,
+                dataNascimento,
+                statusCupom,
+                observacao,
+                ativo);
     }
 
-    public void atualizarDados(String nome, String telefone, String cidade, String estado, LocalDate dataNascimento) {
+    public void atualizarDados(
+            String nome, String telefone, String cidade, String estado, LocalDate dataNascimento) {
         this.nome = exigirNome(nome);
         this.telefone = telefone;
         this.cidade = cidade;
         this.estado = estado;
         this.dataNascimento = dataNascimento;
+    }
+
+    public void desativar() {
+        this.ativo = false;
+    }
+
+    public void reativar() {
+        this.ativo = true;
     }
 
     public void marcarCupomEnviado() {
@@ -137,6 +160,10 @@ public final class Cliente {
 
     public String observacao() {
         return observacao;
+    }
+
+    public boolean ativo() {
+        return ativo;
     }
 
     @Override

@@ -1,0 +1,26 @@
+# Perfil local: H2 em memória (sem PostgreSQL).
+# Subir: mvn spring-boot:run -Dspring-boot.run.profiles=local
+spring:
+  datasource:
+    url: jdbc:h2:mem:chamego;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+  jpa:
+    hibernate:
+      # Schema a partir das entidades JPA (rápido para testes locais).
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    # Evita conflito com o schema gerado pelo Hibernate no H2.
+    enabled: false
+
+logging:
+  level:
+    org.hibernate.SQL: WARN

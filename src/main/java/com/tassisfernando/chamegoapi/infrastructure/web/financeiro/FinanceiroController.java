@@ -2,6 +2,7 @@ package com.tassisfernando.chamegoapi.infrastructure.web.financeiro;
 
 import com.tassisfernando.chamegoapi.application.financeiro.CalcularResultadoFinanceiroUseCase;
 import com.tassisfernando.chamegoapi.application.financeiro.ResultadoFinanceiro;
+import com.tassisfernando.chamegoapi.domain.compartilhado.PeriodoOperacao;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,9 +24,11 @@ public class FinanceiroController {
 
     @GetMapping("/resultado")
     public Map<String, Object> resultado(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
-        ResultadoFinanceiro resultado = calcularResultadoFinanceiroUseCase.executar(inicio, fim);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+        LocalDate inicioResolvido = PeriodoOperacao.inicioEfetivo(inicio);
+        LocalDate fimResolvido = PeriodoOperacao.fimEfetivo(fim);
+        ResultadoFinanceiro resultado = calcularResultadoFinanceiroUseCase.executar(inicioResolvido, fimResolvido);
         return Map.of(
                 "inicio", resultado.inicio(),
                 "fim", resultado.fim(),

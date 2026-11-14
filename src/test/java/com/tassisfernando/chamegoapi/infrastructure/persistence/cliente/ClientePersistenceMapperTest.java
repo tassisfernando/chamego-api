@@ -25,7 +25,8 @@ class ClientePersistenceMapperTest {
                 LocalDate.of(2025, 12, 18),
                 LocalDate.of(1990, 3, 23),
                 StatusCupom.ENVIADO,
-                null);
+                null,
+                true);
 
         ClienteJpaEntity jpa = mapper.paraJpa(original);
         Cliente reconstruido = mapper.paraDominio(jpa);

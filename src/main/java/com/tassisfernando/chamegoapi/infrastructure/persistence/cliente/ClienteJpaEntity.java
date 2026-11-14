@@ -36,6 +36,9 @@ public class ClienteJpaEntity {
 
     private String observacao;
 
+    @Column(nullable = false)
+    private boolean ativo = true;
+
     @Column(name = "criado_em", nullable = false)
     private Instant criadoEm;
 
@@ -124,5 +127,13 @@ public class ClienteJpaEntity {
 
     public void setObservacao(String observacao) {
         this.observacao = observacao;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
     }
 }
