@@ -12,5 +12,6 @@ public interface ProdutoJpaRepository extends JpaRepository<ProdutoJpaEntity, UU
     @Query("select distinct p from ProdutoJpaEntity p left join fetch p.receita where p.id = :id")
     Optional<ProdutoJpaEntity> buscarComReceita(UUID id);
 
-    List<ProdutoJpaEntity> findByAtivoTrue();
+    @Query("select distinct p from ProdutoJpaEntity p left join fetch p.receita where p.ativo = true")
+    List<ProdutoJpaEntity> listarAtivosComReceita();
 }

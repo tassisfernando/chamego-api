@@ -34,7 +34,7 @@ public class ProdutoRepositoryAdapter implements ProdutoRepository {
 
     @Override
     public List<Produto> listarAtivos() {
-        return jpaRepository.findByAtivoTrue().stream().map(this::paraDominio).toList();
+        return jpaRepository.listarAtivosComReceita().stream().map(this::paraDominio).toList();
     }
 
     @Override

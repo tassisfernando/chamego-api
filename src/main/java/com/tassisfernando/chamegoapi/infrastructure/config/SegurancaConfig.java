@@ -12,6 +12,9 @@ public class SegurancaConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> {})
+                // Permite o console H2 (iframe) no perfil local.
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .build();
     }
