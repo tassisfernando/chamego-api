@@ -55,13 +55,16 @@
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Spring Boot 4: autoconfig do Flyway está em spring-boot-flyway (via starter).
+             Só flyway-core NÃO roda migrations — falha silenciosa em DB vazio. -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
