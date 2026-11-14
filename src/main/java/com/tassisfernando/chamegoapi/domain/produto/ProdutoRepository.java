@@ -16,5 +16,7 @@ public interface ProdutoRepository {
 
     Pagina<Produto> listarAtivos(int pagina, int tamanho);
 
+    Pagina<Produto> buscarAtivos(String busca, int pagina, int tamanho);
+
     List<Produto> salvarTodos(List<Produto> produtos);
 }

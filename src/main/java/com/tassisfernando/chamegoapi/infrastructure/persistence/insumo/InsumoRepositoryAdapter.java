@@ -52,6 +52,21 @@ public class InsumoRepositoryAdapter implements InsumoRepository {
     }
 
     @Override
+    public Pagina<Insumo> buscarAtivos(String busca, int pagina, int tamanho) {
+        String termo = busca == null ? "" : busca.trim();
+        if (termo.isBlank()) {
+            return listarAtivos(pagina, tamanho);
+        }
+        Page<InsumoJpaEntity> page = jpaRepository.buscarAtivos(
+                termo, PageRequest.of(pagina, tamanho, Sort.by("nome").ascending()));
+        return Pagina.de(
+                page.getContent().stream().map(this::paraDominio).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
+    }
+
+    @Override
     public List<Insumo> salvarTodos(List<Insumo> insumos) {
         return jpaRepository.saveAll(insumos.stream().map(this::paraJpa).toList()).stream()
                 .map(this::paraDominio)

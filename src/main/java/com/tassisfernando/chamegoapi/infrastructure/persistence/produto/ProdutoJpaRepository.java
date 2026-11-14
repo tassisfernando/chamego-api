@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,4 +19,16 @@ public interface ProdutoJpaRepository extends JpaRepository<ProdutoJpaEntity, UU
     List<ProdutoJpaEntity> listarAtivosComReceita();
 
     Page<ProdutoJpaEntity> findByAtivoTrue(Pageable pageable);
+
+    @Query(
+            """
+            select p from ProdutoJpaEntity p
+            where p.ativo = true
+              and (
+                lower(p.nome) like lower(concat('%', :busca, '%'))
+                or lower(coalesce(p.descricao, '')) like lower(concat('%', :busca, '%'))
+                or lower(p.categoria) like lower(concat('%', :busca, '%'))
+              )
+            """)
+    Page<ProdutoJpaEntity> buscarAtivos(@Param("busca") String busca, Pageable pageable);
 }

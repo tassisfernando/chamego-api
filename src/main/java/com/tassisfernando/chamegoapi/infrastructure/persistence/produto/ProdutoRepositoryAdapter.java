@@ -45,6 +45,21 @@ public class ProdutoRepositoryAdapter implements ProdutoRepository {
     public Pagina<Produto> listarAtivos(int pagina, int tamanho) {
         Page<ProdutoJpaEntity> page =
                 jpaRepository.findByAtivoTrue(PageRequest.of(pagina, tamanho, Sort.by("nome").ascending()));
+        return mapearPaginaComReceita(page);
+    }
+
+    @Override
+    public Pagina<Produto> buscarAtivos(String busca, int pagina, int tamanho) {
+        String termo = busca == null ? "" : busca.trim();
+        if (termo.isBlank()) {
+            return listarAtivos(pagina, tamanho);
+        }
+        Page<ProdutoJpaEntity> page = jpaRepository.buscarAtivos(
+                termo, PageRequest.of(pagina, tamanho, Sort.by("nome").ascending()));
+        return mapearPaginaComReceita(page);
+    }
+
+    private Pagina<Produto> mapearPaginaComReceita(Page<ProdutoJpaEntity> page) {
         List<Produto> conteudo = page.getContent().stream()
                 .map(entidade -> jpaRepository.buscarComReceita(entidade.getId()).orElse(entidade))
                 .map(this::paraDominio)

@@ -22,11 +22,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -44,9 +48,10 @@ public class ProdutoController {
 
     @GetMapping
     public PaginaResposta<ProdutoResposta> listar(
+            @RequestParam(required = false) String busca,
             @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
         return PaginaResposta.mapear(
-                produtoRepository.listarAtivos(pageable.getPageNumber(), pageable.getPageSize()),
+                produtoRepository.buscarAtivos(busca, pageable.getPageNumber(), pageable.getPageSize()),
                 ProdutoResposta::de);
     }
 
@@ -66,13 +71,7 @@ public class ProdutoController {
                 Dinheiro.de(requisicao.custoPadrao() == null ? BigDecimal.ZERO : requisicao.custoPadrao()));
 
         if (requisicao.receita() != null && !requisicao.receita().isEmpty()) {
-            produto.definirReceita(requisicao.receita().stream()
-                    .map(item -> new ItemReceita(
-                            item.insumoId(),
-                            Quantidade.de(
-                                    item.quantidade(),
-                                    item.unidadeMedida() == null ? UnidadeMedida.G : item.unidadeMedida())))
-                    .toList());
+            produto.definirReceita(consolidarReceita(requisicao.receita()));
         }
 
         return ProdutoResposta.de(produtoRepository.salvar(produto));
@@ -150,5 +149,25 @@ public class ProdutoController {
     }
 
     public record ItemReceitaResposta(UUID insumoId, BigDecimal quantidade, UnidadeMedida unidadeMedida) {
+    }
+
+    /** Agrupa por insumoId e soma quantidades (evita violar uq_produto_insumo). */
+    private static List<ItemReceita> consolidarReceita(List<ItemReceitaRequisicao> receita) {
+        Map<UUID, BigDecimal> quantidades = new LinkedHashMap<>();
+        Map<UUID, UnidadeMedida> unidades = new LinkedHashMap<>();
+        for (ItemReceitaRequisicao item : receita) {
+            quantidades.merge(item.insumoId(), item.quantidade(), BigDecimal::add);
+            unidades.putIfAbsent(
+                    item.insumoId(),
+                    item.unidadeMedida() == null ? UnidadeMedida.G : item.unidadeMedida());
+        }
+        List<ItemReceita> itens = new ArrayList<>();
+        for (Map.Entry<UUID, BigDecimal> entry : quantidades.entrySet()) {
+            UUID insumoId = entry.getKey();
+            itens.add(new ItemReceita(
+                    insumoId,
+                    Quantidade.de(entry.getValue(), unidades.get(insumoId))));
+        }
+        return itens;
     }
 }

@@ -16,5 +16,7 @@ public interface InsumoRepository {
 
     Pagina<Insumo> listarAtivos(int pagina, int tamanho);
 
+    Pagina<Insumo> buscarAtivos(String busca, int pagina, int tamanho);
+
     List<Insumo> salvarTodos(List<Insumo> insumos);
 }
