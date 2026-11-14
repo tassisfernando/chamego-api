@@ -3,9 +3,13 @@ package com.tassisfernando.chamegoapi.infrastructure.persistence.producao;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Quantidade;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
+import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.producao.ItemConsumoProducao;
 import com.tassisfernando.chamegoapi.domain.producao.LoteProducao;
 import com.tassisfernando.chamegoapi.domain.producao.ProducaoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -37,8 +41,19 @@ public class ProducaoRepositoryAdapter implements ProducaoRepository {
         return jpaRepository.listarPorPeriodo(inicio, fim).stream().map(this::paraDominio).toList();
     }
 
+    @Override
+    public Pagina<LoteProducao> listarPorPeriodo(LocalDate inicio, LocalDate fim, int pagina, int tamanho) {
+        Page<LoteProducaoJpaEntity> page = jpaRepository.listarPorPeriodo(
+                inicio, fim, PageRequest.of(pagina, tamanho, Sort.by("dataProducao").descending()));
+        return Pagina.de(
+                page.getContent().stream().map(this::paraDominio).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
+    }
+
     private LoteProducaoJpaEntity paraJpa(LoteProducao lote) {
-        LoteProducaoJpaEntity entidade = new LoteProducaoJpaEntity();
+        LoteProducaoJpaEntity entidade = jpaRepository.findById(lote.id()).orElseGet(LoteProducaoJpaEntity::new);
         entidade.setId(lote.id());
         entidade.setProdutoId(lote.produtoId());
         entidade.setDataProducao(lote.dataProducao());
@@ -46,6 +61,7 @@ public class ProducaoRepositoryAdapter implements ProducaoRepository {
         entidade.setCustoUnitario(lote.custoUnitario().valor());
         entidade.setCustoTotal(lote.custoTotal().valor());
         entidade.setObservacao(lote.observacao());
+        entidade.getConsumos().clear();
         for (ItemConsumoProducao consumo : lote.consumos()) {
             ItemConsumoProducaoJpaEntity linha = new ItemConsumoProducaoJpaEntity();
             linha.setId(UUID.randomUUID());

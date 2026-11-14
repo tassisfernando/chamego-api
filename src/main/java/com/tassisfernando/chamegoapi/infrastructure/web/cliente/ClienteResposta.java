@@ -13,5 +13,6 @@ public record ClienteResposta(
         String estado,
         LocalDate dataCadastro,
         LocalDate dataNascimento,
-        StatusCupom statusCupom) {
+        StatusCupom statusCupom,
+        boolean ativo) {
 }

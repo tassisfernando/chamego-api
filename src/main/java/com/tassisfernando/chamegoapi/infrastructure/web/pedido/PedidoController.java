@@ -1,17 +1,27 @@
 package com.tassisfernando.chamegoapi.infrastructure.web.pedido;
 
+import com.tassisfernando.chamegoapi.application.pedido.AtualizarPedidoComando;
+import com.tassisfernando.chamegoapi.application.pedido.AtualizarPedidoUseCase;
 import com.tassisfernando.chamegoapi.application.pedido.RegistrarPedidoComando;
 import com.tassisfernando.chamegoapi.application.pedido.RegistrarPedidoUseCase;
+import com.tassisfernando.chamegoapi.domain.compartilhado.PeriodoOperacao;
 import com.tassisfernando.chamegoapi.domain.pedido.ItemPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.NaturezaPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.Pedido;
 import com.tassisfernando.chamegoapi.domain.pedido.PedidoRepository;
 import com.tassisfernando.chamegoapi.domain.pedido.StatusPedido;
+import com.tassisfernando.chamegoapi.infrastructure.web.compartilhado.PaginaResposta;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,19 +39,29 @@ import java.util.UUID;
 public class PedidoController {
 
     private final RegistrarPedidoUseCase registrarPedidoUseCase;
+    private final AtualizarPedidoUseCase atualizarPedidoUseCase;
     private final PedidoRepository pedidoRepository;
 
     public PedidoController(
-            RegistrarPedidoUseCase registrarPedidoUseCase, PedidoRepository pedidoRepository) {
+            RegistrarPedidoUseCase registrarPedidoUseCase,
+            AtualizarPedidoUseCase atualizarPedidoUseCase,
+            PedidoRepository pedidoRepository) {
         this.registrarPedidoUseCase = registrarPedidoUseCase;
+        this.atualizarPedidoUseCase = atualizarPedidoUseCase;
         this.pedidoRepository = pedidoRepository;
     }
 
     @GetMapping
-    public List<PedidoResposta> listar(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
-        return pedidoRepository.listarPorPeriodo(inicio, fim).stream().map(PedidoResposta::de).toList();
+    public PaginaResposta<PedidoResposta> listar(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @PageableDefault(size = 20, sort = "dataPedido") Pageable pageable) {
+        LocalDate inicioResolvido = PeriodoOperacao.inicioEfetivo(inicio);
+        LocalDate fimResolvido = PeriodoOperacao.fimEfetivo(fim);
+        return PaginaResposta.mapear(
+                pedidoRepository.listarPorPeriodo(
+                        inicioResolvido, fimResolvido, pageable.getPageNumber(), pageable.getPageSize()),
+                PedidoResposta::de);
     }
 
     @PostMapping
@@ -58,6 +78,29 @@ public class PedidoController {
                 "status", pedido.status(),
                 "valorTotal", pedido.valorTotal().valor(),
                 "lucroBruto", pedido.lucroBruto().valor());
+    }
+
+    @PutMapping("/{id}")
+    public PedidoResposta atualizar(
+            @PathVariable UUID id, @Valid @RequestBody AtualizarPedidoRequisicao requisicao) {
+        Pedido pedido = atualizarPedidoUseCase.executar(new AtualizarPedidoComando(
+                id,
+                requisicao.clienteId(),
+                requisicao.dataPedido(),
+                requisicao.natureza(),
+                requisicao.status(),
+                requisicao.observacao(),
+                requisicao.itens().stream().map(RegistrarPedidoRequisicao.ItemRequisicao::paraComando).toList()));
+        return PedidoResposta.de(pedido);
+    }
+
+    public record AtualizarPedidoRequisicao(
+            @NotNull UUID clienteId,
+            LocalDate dataPedido,
+            NaturezaPedido natureza,
+            StatusPedido status,
+            String observacao,
+            @NotEmpty @Valid List<RegistrarPedidoRequisicao.ItemRequisicao> itens) {
     }
 
     public record PedidoResposta(

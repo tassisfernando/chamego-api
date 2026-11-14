@@ -106,6 +106,31 @@ public final class Produto {
         this.custoPadrao = novoCusto;
     }
 
+    public void atualizarDados(
+            String nome,
+            String descricao,
+            CategoriaProduto categoria,
+            Integer pesoGramas,
+            Dinheiro precoVenda,
+            Dinheiro custoPadrao) {
+        if (nome == null || nome.isBlank()) {
+            throw new RegraDeNegocioViolada("nome do produto é obrigatório");
+        }
+        this.nome = nome.trim();
+        this.descricao = descricao;
+        this.categoria = categoria == null ? CategoriaProduto.VELA : categoria;
+        this.pesoGramas = pesoGramas;
+        this.precoVenda = precoVenda == null ? Dinheiro.zero() : precoVenda;
+        this.custoPadrao = custoPadrao == null ? Dinheiro.zero() : custoPadrao;
+    }
+
+    public void definirEstoque(int novoEstoque) {
+        if (novoEstoque < 0) {
+            throw new RegraDeNegocioViolada("estoque do produto não pode ser negativo");
+        }
+        this.estoqueAtual = novoEstoque;
+    }
+
     private static void garantirQuantidadePositiva(int quantidade) {
         if (quantidade <= 0) {
             throw new RegraDeNegocioViolada("quantidade deve ser positiva");

@@ -84,6 +84,34 @@ public final class Despesa {
                 id, descricao, dataDespesa, valor, quantidade, tipo, insumoId, ferramentaId, observacao);
     }
 
+    public void atualizar(
+            String descricao,
+            LocalDate dataDespesa,
+            Dinheiro valor,
+            Quantidade quantidade,
+            TipoDespesa tipo,
+            UUID insumoId,
+            UUID ferramentaId,
+            String observacao) {
+        if (descricao == null || descricao.isBlank()) {
+            throw new RegraDeNegocioViolada("descrição da despesa é obrigatória");
+        }
+        if (tipo == TipoDespesa.INSUMO && insumoId == null) {
+            throw new RegraDeNegocioViolada("despesa de insumo precisa do insumo vinculado");
+        }
+        if (tipo == TipoDespesa.FERRAMENTA && ferramentaId == null) {
+            throw new RegraDeNegocioViolada("despesa de ferramenta precisa da ferramenta vinculada");
+        }
+        this.descricao = descricao.trim();
+        this.dataDespesa = dataDespesa == null ? LocalDate.now() : dataDespesa;
+        this.valor = valor;
+        this.quantidade = quantidade;
+        this.tipo = tipo;
+        this.insumoId = insumoId;
+        this.ferramentaId = ferramentaId;
+        this.observacao = observacao;
+    }
+
     public boolean atualizaEstoqueInsumo() {
         return tipo == TipoDespesa.INSUMO && insumoId != null && quantidade != null;
     }

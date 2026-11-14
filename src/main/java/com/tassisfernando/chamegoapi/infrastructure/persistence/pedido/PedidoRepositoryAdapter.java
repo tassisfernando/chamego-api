@@ -1,11 +1,15 @@
 package com.tassisfernando.chamegoapi.infrastructure.persistence.pedido;
 
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
+import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.pedido.ItemPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.NaturezaPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.Pedido;
 import com.tassisfernando.chamegoapi.domain.pedido.PedidoRepository;
 import com.tassisfernando.chamegoapi.domain.pedido.StatusPedido;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -35,6 +39,17 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
     @Override
     public List<Pedido> listarPorPeriodo(LocalDate inicio, LocalDate fim) {
         return jpaRepository.listarPorPeriodo(inicio, fim).stream().map(this::paraDominio).toList();
+    }
+
+    @Override
+    public Pagina<Pedido> listarPorPeriodo(LocalDate inicio, LocalDate fim, int pagina, int tamanho) {
+        Page<PedidoJpaEntity> page = jpaRepository.listarPorPeriodo(
+                inicio, fim, PageRequest.of(pagina, tamanho, Sort.by("dataPedido").descending()));
+        List<Pedido> conteudo = page.getContent().stream()
+                .map(entidade -> jpaRepository.buscarComItens(entidade.getId()).orElse(entidade))
+                .map(this::paraDominio)
+                .toList();
+        return Pagina.de(conteudo, page.getNumber(), page.getSize(), page.getTotalElements());
     }
 
     @Override

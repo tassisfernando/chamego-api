@@ -90,6 +90,26 @@ public final class Insumo {
         this.estoqueAtual = estoqueAtual.subtrair(quantidade);
     }
 
+    public void atualizarDados(String nome, CategoriaInsumo categoria, String marca, UnidadeMedida unidadeMedida) {
+        this.nome = exigirNome(nome);
+        this.categoria = Objects.requireNonNull(categoria);
+        this.marca = marca;
+        if (unidadeMedida != null) {
+            this.unidadeMedida = unidadeMedida;
+        }
+    }
+
+    public void definirEstoque(Quantidade novoEstoque) {
+        if (novoEstoque == null) {
+            throw new RegraDeNegocioViolada("estoque do insumo é obrigatório");
+        }
+        this.estoqueAtual = novoEstoque;
+    }
+
+    public void definirCustoMedio(Dinheiro custoMedio) {
+        this.custoMedio = custoMedio == null ? Dinheiro.zero() : custoMedio;
+    }
+
     private static String exigirNome(String nome) {
         if (nome == null || nome.isBlank()) {
             throw new RegraDeNegocioViolada("nome do insumo é obrigatório");

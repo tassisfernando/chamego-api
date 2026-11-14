@@ -4,8 +4,11 @@ import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
 import com.tassisfernando.chamegoapi.domain.ferramenta.Ferramenta;
 import com.tassisfernando.chamegoapi.domain.ferramenta.FerramentaRepository;
+import com.tassisfernando.chamegoapi.infrastructure.web.compartilhado.PaginaResposta;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +33,15 @@ public class FerramentaController {
     }
 
     @GetMapping
-    public List<FerramentaResposta> listar() {
+    public PaginaResposta<FerramentaResposta> listar(
+            @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
+        return PaginaResposta.mapear(
+                ferramentaRepository.listarAtivas(pageable.getPageNumber(), pageable.getPageSize()),
+                FerramentaResposta::de);
+    }
+
+    @GetMapping("/opcoes")
+    public List<FerramentaResposta> opcoes() {
         return ferramentaRepository.listarAtivas().stream().map(FerramentaResposta::de).toList();
     }
 

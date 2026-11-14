@@ -5,8 +5,12 @@ import com.tassisfernando.chamegoapi.domain.compartilhado.Quantidade;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
 import com.tassisfernando.chamegoapi.domain.produto.CategoriaProduto;
 import com.tassisfernando.chamegoapi.domain.produto.ItemReceita;
+import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.produto.Produto;
 import com.tassisfernando.chamegoapi.domain.produto.ProdutoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -35,6 +39,17 @@ public class ProdutoRepositoryAdapter implements ProdutoRepository {
     @Override
     public List<Produto> listarAtivos() {
         return jpaRepository.listarAtivosComReceita().stream().map(this::paraDominio).toList();
+    }
+
+    @Override
+    public Pagina<Produto> listarAtivos(int pagina, int tamanho) {
+        Page<ProdutoJpaEntity> page =
+                jpaRepository.findByAtivoTrue(PageRequest.of(pagina, tamanho, Sort.by("nome").ascending()));
+        List<Produto> conteudo = page.getContent().stream()
+                .map(entidade -> jpaRepository.buscarComReceita(entidade.getId()).orElse(entidade))
+                .map(this::paraDominio)
+                .toList();
+        return Pagina.de(conteudo, page.getNumber(), page.getSize(), page.getTotalElements());
     }
 
     @Override

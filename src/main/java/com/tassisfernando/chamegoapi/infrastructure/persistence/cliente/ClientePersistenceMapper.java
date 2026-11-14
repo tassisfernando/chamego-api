@@ -18,6 +18,7 @@ public class ClientePersistenceMapper {
         entidade.setDataNascimento(cliente.dataNascimento());
         entidade.setStatusCupom(cliente.statusCupom().name());
         entidade.setObservacao(cliente.observacao());
+        entidade.setAtivo(cliente.ativo());
         return entidade;
     }
 
@@ -34,6 +35,7 @@ public class ClientePersistenceMapper {
                 entidade.getDataCadastro(),
                 entidade.getDataNascimento(),
                 StatusCupom.valueOf(entidade.getStatusCupom()),
-                entidade.getObservacao());
+                entidade.getObservacao(),
+                entidade.isAtivo());
     }
 }

@@ -1,0 +1,11 @@
+package com.tassisfernando.chamegoapi.infrastructure.persistence.usuario;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface UsuarioJpaRepository extends JpaRepository<UsuarioJpaEntity, UUID> {
+
+    Optional<UsuarioJpaEntity> findByLoginIgnoreCase(String login);
+}

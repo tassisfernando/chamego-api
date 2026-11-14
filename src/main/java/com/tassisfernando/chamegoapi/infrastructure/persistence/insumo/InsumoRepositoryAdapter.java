@@ -4,8 +4,12 @@ import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Quantidade;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
 import com.tassisfernando.chamegoapi.domain.insumo.CategoriaInsumo;
+import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.insumo.Insumo;
 import com.tassisfernando.chamegoapi.domain.insumo.InsumoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -34,6 +38,17 @@ public class InsumoRepositoryAdapter implements InsumoRepository {
     @Override
     public List<Insumo> listarAtivos() {
         return jpaRepository.findByAtivoTrue().stream().map(this::paraDominio).toList();
+    }
+
+    @Override
+    public Pagina<Insumo> listarAtivos(int pagina, int tamanho) {
+        Page<InsumoJpaEntity> page =
+                jpaRepository.findByAtivoTrue(PageRequest.of(pagina, tamanho, Sort.by("nome").ascending()));
+        return Pagina.de(
+                page.getContent().stream().map(this::paraDominio).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
     }
 
     @Override

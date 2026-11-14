@@ -2,8 +2,12 @@ package com.tassisfernando.chamegoapi.infrastructure.persistence.ferramenta;
 
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
+import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.ferramenta.Ferramenta;
 import com.tassisfernando.chamegoapi.domain.ferramenta.FerramentaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,6 +36,17 @@ public class FerramentaRepositoryAdapter implements FerramentaRepository {
     @Override
     public List<Ferramenta> listarAtivas() {
         return jpaRepository.findByAtivoTrue().stream().map(this::paraDominio).toList();
+    }
+
+    @Override
+    public Pagina<Ferramenta> listarAtivas(int pagina, int tamanho) {
+        Page<FerramentaJpaEntity> page =
+                jpaRepository.findByAtivoTrue(PageRequest.of(pagina, tamanho, Sort.by("nome").ascending()));
+        return Pagina.de(
+                page.getContent().stream().map(this::paraDominio).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
     }
 
     private FerramentaJpaEntity paraJpa(Ferramenta ferramenta) {

@@ -3,9 +3,13 @@ package com.tassisfernando.chamegoapi.infrastructure.persistence.despesa;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Quantidade;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
+import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.despesa.Despesa;
 import com.tassisfernando.chamegoapi.domain.despesa.DespesaRepository;
 import com.tassisfernando.chamegoapi.domain.despesa.TipoDespesa;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -39,8 +43,19 @@ public class DespesaRepositoryAdapter implements DespesaRepository {
                 .toList();
     }
 
+    @Override
+    public Pagina<Despesa> listarPorPeriodo(LocalDate inicio, LocalDate fim, int pagina, int tamanho) {
+        Page<DespesaJpaEntity> page = jpaRepository.findByDataDespesaBetween(
+                inicio, fim, PageRequest.of(pagina, tamanho, Sort.by("dataDespesa").descending()));
+        return Pagina.de(
+                page.getContent().stream().map(this::paraDominio).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
+    }
+
     private DespesaJpaEntity paraJpa(Despesa despesa) {
-        DespesaJpaEntity entidade = new DespesaJpaEntity();
+        DespesaJpaEntity entidade = jpaRepository.findById(despesa.id()).orElseGet(DespesaJpaEntity::new);
         entidade.setId(despesa.id());
         entidade.setDescricao(despesa.descricao());
         entidade.setDataDespesa(despesa.dataDespesa());
