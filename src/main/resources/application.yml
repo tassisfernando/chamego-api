@@ -45,6 +45,16 @@ chamego:
   operacao:
     data-inicio: 2025-12-01
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
 logging:
   level:
     org.flywaydb: INFO

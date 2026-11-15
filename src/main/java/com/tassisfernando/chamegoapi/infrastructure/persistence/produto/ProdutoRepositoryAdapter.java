@@ -13,8 +13,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -75,7 +79,8 @@ public class ProdutoRepositoryAdapter implements ProdutoRepository {
     }
 
     private ProdutoJpaEntity paraJpa(Produto produto) {
-        ProdutoJpaEntity entidade = jpaRepository.findById(produto.id()).orElseGet(ProdutoJpaEntity::new);
+        ProdutoJpaEntity entidade =
+                jpaRepository.buscarComReceita(produto.id()).orElseGet(ProdutoJpaEntity::new);
         entidade.setId(produto.id());
         entidade.setNome(produto.nome());
         entidade.setDescricao(produto.descricao());
@@ -85,17 +90,35 @@ public class ProdutoRepositoryAdapter implements ProdutoRepository {
         entidade.setCustoPadrao(produto.custoPadrao().valor());
         entidade.setEstoqueAtual(produto.estoqueAtual());
         entidade.setAtivo(produto.ativo());
-        entidade.getReceita().clear();
-        for (ItemReceita item : produto.receita()) {
-            ProdutoInsumoJpaEntity linha = new ProdutoInsumoJpaEntity();
-            linha.setId(UUID.randomUUID());
-            linha.setProduto(entidade);
+        sincronizarReceita(entidade, produto.receita());
+        return entidade;
+    }
+
+    /**
+     * Atualiza a BOM sem apagar e recriar linhas: evita INSERT duplicado em {@code uq_produto_insumo}
+     * quando o produto é salvo após produção/pedido.
+     */
+    private static void sincronizarReceita(ProdutoJpaEntity entidade, List<ItemReceita> receitaDominio) {
+        Map<UUID, ProdutoInsumoJpaEntity> linhasPorInsumo = new HashMap<>();
+        for (ProdutoInsumoJpaEntity existente : entidade.getReceita()) {
+            linhasPorInsumo.put(existente.getInsumoId(), existente);
+        }
+        Set<UUID> insumosDesejados = new HashSet<>();
+        for (ItemReceita item : receitaDominio) {
+            insumosDesejados.add(item.insumoId());
+            ProdutoInsumoJpaEntity linha = linhasPorInsumo.get(item.insumoId());
+            if (linha == null) {
+                linha = new ProdutoInsumoJpaEntity();
+                linha.setId(UUID.randomUUID());
+                linha.setProduto(entidade);
+                entidade.getReceita().add(linha);
+                linhasPorInsumo.put(item.insumoId(), linha);
+            }
             linha.setInsumoId(item.insumoId());
             linha.setQuantidade(item.quantidadePorUnidade().valor());
             linha.setUnidadeMedida(item.quantidadePorUnidade().unidade().name());
-            entidade.getReceita().add(linha);
         }
-        return entidade;
+        entidade.getReceita().removeIf(l -> !insumosDesejados.contains(l.getInsumoId()));
     }
 
     private Produto paraDominio(ProdutoJpaEntity entidade) {
