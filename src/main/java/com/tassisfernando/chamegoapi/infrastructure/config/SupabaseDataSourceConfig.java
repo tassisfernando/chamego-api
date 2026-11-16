@@ -36,8 +36,8 @@ public class SupabaseDataSourceConfig {
         }
         // Plano free/starter do Supabase tem poucas conexões no modo Session.
         hikari.setMaximumPoolSize(3);
-        hikari.setMinimumIdle(0);
-        hikari.setConnectionTimeout(30_000);
+        hikari.setMinimumIdle(1);
+        hikari.setConnectionTimeout(20_000);
         hikari.setIdleTimeout(60_000);
         hikari.setMaxLifetime(600_000);
         hikari.addDataSourceProperty("prepareThreshold", "0");

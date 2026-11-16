@@ -13,19 +13,32 @@ COPY src ./src
 RUN ./mvnw -B -DskipTests package \
     && cp target/chamego-api-*.jar /workspace/app.jar
 
+# AppCDS: aquece o classpath com H2 local (sem Supabase) e encerra após o contexto subir
+RUN SPRING_PROFILES_ACTIVE=local \
+    java -XX:ArchiveClassesAtExit=/workspace/app.jsa \
+    -Dspring.context.exit=onRefresh \
+    -jar /workspace/app.jar
+
+# Camadas do fat JAR — melhor cache e ordem de carga no runtime
+RUN java -Djarmode=tools -jar /workspace/app.jar extract \
+    --layers --launcher --destination /workspace/extracted
+
 # Runtime enxuto
 FROM eclipse-temurin:25-jre-jammy AS runtime
-WORKDIR /app
+WORKDIR /application
 
 RUN groupadd --system chamego \
-    && useradd --system --gid chamego --home-dir /app --shell /usr/sbin/nologin chamego
+    && useradd --system --gid chamego --home-dir /application --shell /usr/sbin/nologin chamego
 
-COPY --from=build /workspace/app.jar /app/app.jar
-RUN chown chamego:chamego /app/app.jar
+COPY --from=build --chown=chamego:chamego /workspace/app.jsa /application/app.jsa
+COPY --from=build --chown=chamego:chamego /workspace/extracted/dependencies/ ./
+COPY --from=build --chown=chamego:chamego /workspace/extracted/spring-boot-loader/ ./
+COPY --from=build --chown=chamego:chamego /workspace/extracted/snapshot-dependencies/ ./
+COPY --from=build --chown=chamego:chamego /workspace/extracted/application/ ./
 
 USER chamego
 EXPOSE 8080
 
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:+ExitOnOutOfMemoryError -XX:SharedArchiveFile=/application/app.jsa"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]

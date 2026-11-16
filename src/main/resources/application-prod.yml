@@ -4,6 +4,26 @@ spring:
     enabled: false
   main:
     banner-mode: off
+    lazy-initialization: true
+  jpa:
+    properties:
+      hibernate:
+        temp:
+          use_jdbc_metadata_defaults: false
+  datasource:
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 20000
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  # Evita SELECT de validação no Supabase a cada probe do Render.
+  health:
+    db:
+      enabled: false
 
 logging:
   level:
