@@ -6,10 +6,12 @@ spring:
     banner-mode: off
     lazy-initialization: true
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
-        temp:
-          use_jdbc_metadata_defaults: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        boot:
+          allow_jdbc_metadata_access: false
   datasource:
     hikari:
       maximum-pool-size: 3
