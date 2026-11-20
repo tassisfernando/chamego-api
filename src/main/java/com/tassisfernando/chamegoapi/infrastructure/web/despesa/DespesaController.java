@@ -2,6 +2,7 @@ package com.tassisfernando.chamegoapi.infrastructure.web.despesa;
 
 import com.tassisfernando.chamegoapi.application.despesa.AtualizarDespesaComando;
 import com.tassisfernando.chamegoapi.application.despesa.AtualizarDespesaUseCase;
+import com.tassisfernando.chamegoapi.application.despesa.ExcluirDespesaUseCase;
 import com.tassisfernando.chamegoapi.application.despesa.RegistrarDespesaComando;
 import com.tassisfernando.chamegoapi.application.despesa.RegistrarDespesaUseCase;
 import com.tassisfernando.chamegoapi.domain.compartilhado.PeriodoOperacao;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,14 +40,17 @@ public class DespesaController {
 
     private final RegistrarDespesaUseCase registrarDespesaUseCase;
     private final AtualizarDespesaUseCase atualizarDespesaUseCase;
+    private final ExcluirDespesaUseCase excluirDespesaUseCase;
     private final DespesaRepository despesaRepository;
 
     public DespesaController(
             RegistrarDespesaUseCase registrarDespesaUseCase,
             AtualizarDespesaUseCase atualizarDespesaUseCase,
+            ExcluirDespesaUseCase excluirDespesaUseCase,
             DespesaRepository despesaRepository) {
         this.registrarDespesaUseCase = registrarDespesaUseCase;
         this.atualizarDespesaUseCase = atualizarDespesaUseCase;
+        this.excluirDespesaUseCase = excluirDespesaUseCase;
         this.despesaRepository = despesaRepository;
     }
 
@@ -92,6 +97,12 @@ public class DespesaController {
                 requisicao.ferramentaId(),
                 requisicao.observacao()));
         return DespesaResposta.de(despesa);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluir(@PathVariable UUID id) {
+        excluirDespesaUseCase.executar(id);
     }
 
     public record Requisicao(

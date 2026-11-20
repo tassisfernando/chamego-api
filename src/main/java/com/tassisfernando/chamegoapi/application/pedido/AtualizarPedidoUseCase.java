@@ -3,11 +3,8 @@ package com.tassisfernando.chamegoapi.application.pedido;
 import com.tassisfernando.chamegoapi.domain.cliente.ClienteRepository;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.EntidadeNaoEncontrada;
-import com.tassisfernando.chamegoapi.domain.compartilhado.Quantidade;
+import com.tassisfernando.chamegoapi.domain.compartilhado.PercentualDesconto;
 import com.tassisfernando.chamegoapi.domain.compartilhado.RegraDeNegocioViolada;
-import com.tassisfernando.chamegoapi.domain.estoque.MovimentoEstoque;
-import com.tassisfernando.chamegoapi.domain.estoque.MovimentoEstoqueRepository;
-import com.tassisfernando.chamegoapi.domain.estoque.OrigemMovimento;
 import com.tassisfernando.chamegoapi.domain.pedido.ItemPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.Pedido;
 import com.tassisfernando.chamegoapi.domain.pedido.PedidoRepository;
@@ -26,17 +23,17 @@ public class AtualizarPedidoUseCase {
     private final PedidoRepository pedidoRepository;
     private final ClienteRepository clienteRepository;
     private final ProdutoRepository produtoRepository;
-    private final MovimentoEstoqueRepository movimentoEstoqueRepository;
+    private final PedidoEstoqueService pedidoEstoqueService;
 
     public AtualizarPedidoUseCase(
             PedidoRepository pedidoRepository,
             ClienteRepository clienteRepository,
             ProdutoRepository produtoRepository,
-            MovimentoEstoqueRepository movimentoEstoqueRepository) {
+            PedidoEstoqueService pedidoEstoqueService) {
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.produtoRepository = produtoRepository;
-        this.movimentoEstoqueRepository = movimentoEstoqueRepository;
+        this.pedidoEstoqueService = pedidoEstoqueService;
     }
 
     @Transactional
@@ -53,37 +50,33 @@ public class AtualizarPedidoUseCase {
                 .buscarPorId(comando.clienteId())
                 .orElseThrow(() -> EntidadeNaoEncontrada.de("Cliente", comando.clienteId()));
 
-        if (atual.status() == StatusPedido.CONFIRMADO) {
-            reverterSaidaEstoque(atual);
+        if (atual.estaConfirmado()) {
+            pedidoEstoqueService.reverterSaidaEstoque(atual);
         }
 
-        StatusPedido novoStatus = comando.status() == null ? StatusPedido.CONFIRMADO : comando.status();
+        StatusPedido novoStatus = comando.status() == null ? atual.status() : comando.status();
         if (novoStatus == StatusPedido.RASCUNHO) {
             throw new RegraDeNegocioViolada("pedido editado não pode voltar para rascunho");
         }
 
-        List<ItemPedido> novosItens = new ArrayList<>();
-        for (ItemPedidoComando itemComando : comando.itens()) {
-            Produto produto = produtoRepository
-                    .buscarPorId(itemComando.produtoId())
-                    .orElseThrow(() -> EntidadeNaoEncontrada.de("Produto", itemComando.produtoId()));
-            Dinheiro preco = itemComando.precoUnitario() == null
-                    ? produto.precoVenda()
-                    : Dinheiro.de(itemComando.precoUnitario());
-            novosItens.add(new ItemPedido(produto.id(), itemComando.quantidade(), preco, produto.custoPadrao()));
-        }
-
+        List<ItemPedido> novosItens = montarItens(comando.itens());
         if (novosItens.isEmpty()) {
             throw new RegraDeNegocioViolada("pedido precisa de pelo menos um item");
         }
+
+        StatusPedido statusBase =
+                atual.ehOrcamento() && novoStatus != StatusPedido.CONFIRMADO
+                        ? StatusPedido.ORCAMENTO
+                        : StatusPedido.RASCUNHO;
 
         Pedido atualizado = Pedido.reconstituir(
                 atual.id(),
                 comando.clienteId(),
                 comando.dataPedido() == null ? atual.dataPedido() : comando.dataPedido(),
-                StatusPedido.RASCUNHO,
+                statusBase,
                 comando.natureza() == null ? atual.natureza() : comando.natureza(),
                 comando.observacao(),
+                PercentualDesconto.de(comando.descontoPercentual()),
                 List.of());
 
         for (ItemPedido item : novosItens) {
@@ -91,20 +84,10 @@ public class AtualizarPedidoUseCase {
         }
 
         if (novoStatus == StatusPedido.CONFIRMADO) {
-            for (ItemPedido item : novosItens) {
-                Produto produto = produtoRepository
-                        .buscarPorId(item.produtoId())
-                        .orElseThrow(() -> EntidadeNaoEncontrada.de("Produto", item.produtoId()));
-                produto.sairEstoque(item.quantidade());
-                produtoRepository.salvar(produto);
-                movimentoEstoqueRepository.salvar(MovimentoEstoque.saidaProduto(
-                        produto.id(),
-                        Quantidade.unidades(item.quantidade()),
-                        OrigemMovimento.VENDA,
-                        atualizado.id(),
-                        atualizado.dataPedido()));
-            }
+            pedidoEstoqueService.aplicarSaidaEstoque(atualizado);
             atualizado.confirmar();
+        } else if (novoStatus == StatusPedido.ORCAMENTO) {
+            atualizado.registrarComoOrcamento();
         } else if (novoStatus == StatusPedido.CANCELADO) {
             atualizado.cancelar();
         }
@@ -112,19 +95,22 @@ public class AtualizarPedidoUseCase {
         return pedidoRepository.salvar(atualizado);
     }
 
-    private void reverterSaidaEstoque(Pedido pedido) {
-        for (ItemPedido item : pedido.itens()) {
+    private List<ItemPedido> montarItens(List<ItemPedidoComando> itensComando) {
+        List<ItemPedido> novosItens = new ArrayList<>();
+        for (ItemPedidoComando itemComando : itensComando) {
             Produto produto = produtoRepository
-                    .buscarPorId(item.produtoId())
-                    .orElseThrow(() -> EntidadeNaoEncontrada.de("Produto", item.produtoId()));
-            produto.entrarEstoque(item.quantidade());
-            produtoRepository.salvar(produto);
-            movimentoEstoqueRepository.salvar(MovimentoEstoque.entradaProduto(
+                    .buscarPorId(itemComando.produtoId())
+                    .orElseThrow(() -> EntidadeNaoEncontrada.de("Produto", itemComando.produtoId()));
+            Dinheiro preco = itemComando.precoUnitario() == null
+                    ? produto.precoVenda()
+                    : Dinheiro.de(itemComando.precoUnitario());
+            novosItens.add(new ItemPedido(
                     produto.id(),
-                    Quantidade.unidades(item.quantidade()),
-                    OrigemMovimento.AJUSTE,
-                    pedido.id(),
-                    pedido.dataPedido()));
+                    itemComando.quantidade(),
+                    preco,
+                    produto.custoPadrao(),
+                    PercentualDesconto.de(itemComando.descontoPercentual())));
         }
+        return novosItens;
     }
 }

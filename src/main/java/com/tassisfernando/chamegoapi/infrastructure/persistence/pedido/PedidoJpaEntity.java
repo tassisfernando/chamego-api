@@ -33,6 +33,9 @@ public class PedidoJpaEntity {
 
     private String observacao;
 
+    @Column(name = "desconto_percentual", nullable = false)
+    private java.math.BigDecimal descontoPercentual = java.math.BigDecimal.ZERO;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemPedidoJpaEntity> itens = new ArrayList<>();
 
@@ -82,6 +85,14 @@ public class PedidoJpaEntity {
 
     public void setObservacao(String observacao) {
         this.observacao = observacao;
+    }
+
+    public java.math.BigDecimal getDescontoPercentual() {
+        return descontoPercentual;
+    }
+
+    public void setDescontoPercentual(java.math.BigDecimal descontoPercentual) {
+        this.descontoPercentual = descontoPercentual;
     }
 
     public List<ItemPedidoJpaEntity> getItens() {

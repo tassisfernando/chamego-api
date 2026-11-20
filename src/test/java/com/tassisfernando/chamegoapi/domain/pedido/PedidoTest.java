@@ -43,6 +43,14 @@ class PedidoTest {
     }
 
     @Test
+    void orcamentoNaoContaComoReceita() {
+        Pedido orcamento = Pedido.novo(UUID.randomUUID(), LocalDate.now(), NaturezaPedido.VENDA, null);
+        orcamento.adicionarItem(new ItemPedido(UUID.randomUUID(), 2, brl("32.90"), brl("16.45")));
+        orcamento.registrarComoOrcamento();
+        assertEquals(brl("0.00"), orcamento.receitaContabil());
+    }
+
+    @Test
     void deveRecusarAlteracaoAposConfirmacao() {
         Pedido pedido = Pedido.novo(UUID.randomUUID(), LocalDate.now(), NaturezaPedido.VENDA, null);
         pedido.adicionarItem(new ItemPedido(UUID.randomUUID(), 1, brl("32.90"), brl("16.45")));

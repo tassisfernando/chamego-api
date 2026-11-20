@@ -17,5 +17,11 @@ public interface PedidoRepository {
 
     Pagina<Pedido> listarPorPeriodo(LocalDate inicio, LocalDate fim, int pagina, int tamanho);
 
+    /** {@code status} nulo lista todos os status no período. */
+    Pagina<Pedido> listarPorPeriodo(
+            LocalDate inicio, LocalDate fim, StatusPedido status, int pagina, int tamanho);
+
     List<Pedido> listarPorCliente(UUID clienteId);
+
+    void excluir(UUID id);
 }

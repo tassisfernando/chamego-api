@@ -3,10 +3,7 @@ package com.tassisfernando.chamegoapi.application.pedido;
 import com.tassisfernando.chamegoapi.domain.cliente.ClienteRepository;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.EntidadeNaoEncontrada;
-import com.tassisfernando.chamegoapi.domain.compartilhado.Quantidade;
-import com.tassisfernando.chamegoapi.domain.estoque.MovimentoEstoque;
-import com.tassisfernando.chamegoapi.domain.estoque.MovimentoEstoqueRepository;
-import com.tassisfernando.chamegoapi.domain.estoque.OrigemMovimento;
+import com.tassisfernando.chamegoapi.domain.compartilhado.PercentualDesconto;
 import com.tassisfernando.chamegoapi.domain.pedido.ItemPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.Pedido;
 import com.tassisfernando.chamegoapi.domain.pedido.PedidoRepository;
@@ -21,17 +18,17 @@ public class RegistrarPedidoUseCase {
     private final PedidoRepository pedidoRepository;
     private final ClienteRepository clienteRepository;
     private final ProdutoRepository produtoRepository;
-    private final MovimentoEstoqueRepository movimentoEstoqueRepository;
+    private final PedidoEstoqueService pedidoEstoqueService;
 
     public RegistrarPedidoUseCase(
             PedidoRepository pedidoRepository,
             ClienteRepository clienteRepository,
             ProdutoRepository produtoRepository,
-            MovimentoEstoqueRepository movimentoEstoqueRepository) {
+            PedidoEstoqueService pedidoEstoqueService) {
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.produtoRepository = produtoRepository;
-        this.movimentoEstoqueRepository = movimentoEstoqueRepository;
+        this.pedidoEstoqueService = pedidoEstoqueService;
     }
 
     @Transactional
@@ -42,6 +39,7 @@ public class RegistrarPedidoUseCase {
 
         Pedido pedido = Pedido.novo(
                 comando.clienteId(), comando.dataPedido(), comando.natureza(), comando.observacao());
+        pedido.definirDescontoPedido(PercentualDesconto.de(comando.descontoPercentual()));
 
         for (ItemPedidoComando itemComando : comando.itens()) {
             Produto produto = produtoRepository
@@ -53,20 +51,20 @@ public class RegistrarPedidoUseCase {
                     : Dinheiro.de(itemComando.precoUnitario());
 
             pedido.adicionarItem(new ItemPedido(
-                    produto.id(), itemComando.quantidade(), preco, produto.custoPadrao()));
-
-            produto.sairEstoque(itemComando.quantidade());
-            produtoRepository.salvar(produto);
-
-            movimentoEstoqueRepository.salvar(MovimentoEstoque.saidaProduto(
                     produto.id(),
-                    Quantidade.unidades(itemComando.quantidade()),
-                    OrigemMovimento.VENDA,
-                    pedido.id(),
-                    pedido.dataPedido()));
+                    itemComando.quantidade(),
+                    preco,
+                    produto.custoPadrao(),
+                    PercentualDesconto.de(itemComando.descontoPercentual())));
         }
 
-        pedido.confirmar();
+        if (comando.confirmarVenda()) {
+            pedido.confirmar();
+            pedidoEstoqueService.aplicarSaidaEstoque(pedido);
+        } else {
+            pedido.registrarComoOrcamento();
+        }
+
         return pedidoRepository.salvar(pedido);
     }
 }

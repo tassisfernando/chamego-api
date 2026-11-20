@@ -1,6 +1,7 @@
 package com.tassisfernando.chamegoapi.domain.pedido;
 
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
+import com.tassisfernando.chamegoapi.domain.compartilhado.PercentualDesconto;
 import com.tassisfernando.chamegoapi.domain.compartilhado.RegraDeNegocioViolada;
 
 import java.math.BigDecimal;
@@ -10,7 +11,12 @@ public record ItemPedido(
         UUID produtoId,
         int quantidade,
         Dinheiro precoUnitario,
-        Dinheiro custoUnitario) {
+        Dinheiro custoUnitario,
+        PercentualDesconto descontoPercentual) {
+
+    public ItemPedido(UUID produtoId, int quantidade, Dinheiro precoUnitario, Dinheiro custoUnitario) {
+        this(produtoId, quantidade, precoUnitario, custoUnitario, PercentualDesconto.zero());
+    }
 
     public ItemPedido {
         if (produtoId == null) {
@@ -25,9 +31,16 @@ public record ItemPedido(
         if (custoUnitario == null) {
             custoUnitario = Dinheiro.zero();
         }
+        if (descontoPercentual == null) {
+            descontoPercentual = PercentualDesconto.zero();
+        }
     }
 
     public Dinheiro receitaBruta() {
+        return PedidoCalculos.totalLiquidoItem(this);
+    }
+
+    public Dinheiro receitaSemDescontoItem() {
         return precoUnitario.multiplicar(BigDecimal.valueOf(quantidade));
     }
 

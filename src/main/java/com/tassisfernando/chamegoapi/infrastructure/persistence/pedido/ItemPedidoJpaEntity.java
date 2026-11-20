@@ -34,6 +34,9 @@ public class ItemPedidoJpaEntity {
     @Column(name = "custo_unitario", nullable = false)
     private BigDecimal custoUnitario;
 
+    @Column(name = "desconto_percentual", nullable = false)
+    private BigDecimal descontoPercentual = BigDecimal.ZERO;
+
     public UUID getId() {
         return id;
     }
@@ -80,5 +83,13 @@ public class ItemPedidoJpaEntity {
 
     public void setCustoUnitario(BigDecimal custoUnitario) {
         this.custoUnitario = custoUnitario;
+    }
+
+    public BigDecimal getDescontoPercentual() {
+        return descontoPercentual;
+    }
+
+    public void setDescontoPercentual(BigDecimal descontoPercentual) {
+        this.descontoPercentual = descontoPercentual;
     }
 }

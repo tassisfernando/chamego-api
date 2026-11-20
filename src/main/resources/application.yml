@@ -28,6 +28,17 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:false}
+          starttls:
+            enable: ${SMTP_STARTTLS:true}
 
 server:
   port: ${PORT:8080}
@@ -45,6 +56,11 @@ chamego:
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   operacao:
     data-inicio: 2025-12-01
+  notificacao:
+    canal: ${NOTIFICATION_CHANNEL:LOG}
+    owner-email: ${OWNER_NOTIFICATION_EMAIL:}
+    owner-whatsapp: ${OWNER_WHATSAPP_NUMBER:}
+    whatsapp-api-url: ${WHATSAPP_API_URL:}
 
 management:
   endpoints:

@@ -1,6 +1,7 @@
 package com.tassisfernando.chamegoapi.domain.pedido;
 
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
+import com.tassisfernando.chamegoapi.domain.compartilhado.PercentualDesconto;
 import com.tassisfernando.chamegoapi.domain.compartilhado.RegraDeNegocioViolada;
 
 import java.time.LocalDate;
@@ -16,6 +17,7 @@ public final class Pedido {
     private StatusPedido status;
     private NaturezaPedido natureza;
     private String observacao;
+    private PercentualDesconto descontoPercentual;
     private final List<ItemPedido> itens;
 
     private Pedido(
@@ -25,6 +27,7 @@ public final class Pedido {
             StatusPedido status,
             NaturezaPedido natureza,
             String observacao,
+            PercentualDesconto descontoPercentual,
             List<ItemPedido> itens) {
         if (clienteId == null) {
             throw new RegraDeNegocioViolada("cliente do pedido é obrigatório");
@@ -35,6 +38,7 @@ public final class Pedido {
         this.status = status == null ? StatusPedido.RASCUNHO : status;
         this.natureza = natureza == null ? NaturezaPedido.VENDA : natureza;
         this.observacao = observacao;
+        this.descontoPercentual = descontoPercentual == null ? PercentualDesconto.zero() : descontoPercentual;
         this.itens = new ArrayList<>(itens == null ? List.of() : itens);
     }
 
@@ -46,6 +50,7 @@ public final class Pedido {
                 StatusPedido.RASCUNHO,
                 natureza,
                 observacao,
+                PercentualDesconto.zero(),
                 List.of());
     }
 
@@ -56,13 +61,19 @@ public final class Pedido {
             StatusPedido status,
             NaturezaPedido natureza,
             String observacao,
+            PercentualDesconto descontoPercentual,
             List<ItemPedido> itens) {
-        return new Pedido(id, clienteId, dataPedido, status, natureza, observacao, itens);
+        return new Pedido(id, clienteId, dataPedido, status, natureza, observacao, descontoPercentual, itens);
     }
 
     public void adicionarItem(ItemPedido item) {
         garantirAlteravel();
         itens.add(item);
+    }
+
+    public void definirDescontoPedido(PercentualDesconto desconto) {
+        garantirAlteravel();
+        this.descontoPercentual = desconto == null ? PercentualDesconto.zero() : desconto;
     }
 
     public void confirmar() {
@@ -78,6 +89,26 @@ public final class Pedido {
         this.status = StatusPedido.CONFIRMADO;
     }
 
+    public void registrarComoOrcamento() {
+        if (itens.isEmpty()) {
+            throw new RegraDeNegocioViolada("pedido sem itens não pode ser salvo como orçamento");
+        }
+        if (status == StatusPedido.CONFIRMADO) {
+            throw new RegraDeNegocioViolada("venda confirmada não pode voltar para orçamento");
+        }
+        if (status == StatusPedido.CANCELADO) {
+            throw new RegraDeNegocioViolada("pedido cancelado não pode ser orçamento");
+        }
+        this.status = StatusPedido.ORCAMENTO;
+    }
+
+    public void concretizarVenda() {
+        if (status != StatusPedido.ORCAMENTO) {
+            throw new RegraDeNegocioViolada("somente orçamentos podem ser concretizados em venda");
+        }
+        confirmar();
+    }
+
     public void cancelar() {
         if (status == StatusPedido.CANCELADO) {
             throw new RegraDeNegocioViolada("pedido já está cancelado");
@@ -85,8 +116,12 @@ public final class Pedido {
         this.status = StatusPedido.CANCELADO;
     }
 
+    public Dinheiro subtotalItens() {
+        return PedidoCalculos.subtotalItens(itens);
+    }
+
     public Dinheiro valorTotal() {
-        return itens.stream().map(ItemPedido::receitaBruta).reduce(Dinheiro.zero(), Dinheiro::somar);
+        return PedidoCalculos.valorTotal(itens, descontoPercentual);
     }
 
     public Dinheiro custoTotal() {
@@ -94,6 +129,9 @@ public final class Pedido {
     }
 
     public Dinheiro receitaContabil() {
+        if (status == StatusPedido.ORCAMENTO) {
+            return Dinheiro.zero();
+        }
         return switch (natureza) {
             case DOACAO, PARCERIA -> Dinheiro.zero();
             case VENDA, CONTRIBUICAO -> valorTotal();
@@ -108,9 +146,13 @@ public final class Pedido {
         return status == StatusPedido.CONFIRMADO;
     }
 
+    public boolean ehOrcamento() {
+        return status == StatusPedido.ORCAMENTO;
+    }
+
     private void garantirAlteravel() {
-        if (status != StatusPedido.RASCUNHO) {
-            throw new RegraDeNegocioViolada("somente pedidos em rascunho podem ser alterados");
+        if (status != StatusPedido.RASCUNHO && status != StatusPedido.ORCAMENTO) {
+            throw new RegraDeNegocioViolada("somente orçamentos ou rascunhos podem ser alterados");
         }
     }
 
@@ -136,6 +178,10 @@ public final class Pedido {
 
     public String observacao() {
         return observacao;
+    }
+
+    public PercentualDesconto descontoPercentual() {
+        return descontoPercentual;
     }
 
     public List<ItemPedido> itens() {

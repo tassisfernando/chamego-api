@@ -1,5 +1,6 @@
 package com.tassisfernando.chamegoapi.infrastructure.web.excecao;
 
+import com.tassisfernando.chamegoapi.domain.compartilhado.EntidadeEmUso;
 import com.tassisfernando.chamegoapi.domain.compartilhado.EntidadeNaoEncontrada;
 import com.tassisfernando.chamegoapi.domain.compartilhado.RegraDeNegocioViolada;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,11 @@ public class TratadorExcecoes {
     @ExceptionHandler(RegraDeNegocioViolada.class)
     public ResponseEntity<ErroResposta> regra(RegraDeNegocioViolada excecao) {
         return resposta(HttpStatus.UNPROCESSABLE_ENTITY, excecao.getMessage());
+    }
+
+    @ExceptionHandler(EntidadeEmUso.class)
+    public ResponseEntity<ErroResposta> emUso(EntidadeEmUso excecao) {
+        return resposta(HttpStatus.CONFLICT, excecao.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

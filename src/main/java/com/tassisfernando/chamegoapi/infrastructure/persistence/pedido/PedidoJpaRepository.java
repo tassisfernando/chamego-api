@@ -28,5 +28,21 @@ public interface PedidoJpaRepository extends JpaRepository<PedidoJpaEntity, UUID
             countQuery = "select count(p) from PedidoJpaEntity p where p.dataPedido between :inicio and :fim")
     Page<PedidoJpaEntity> listarPorPeriodo(LocalDate inicio, LocalDate fim, Pageable pageable);
 
+    @Query(
+            value =
+                    """
+                    select p from PedidoJpaEntity p
+                    where p.dataPedido between :inicio and :fim
+                      and (:status is null or p.status = :status)
+                    """,
+            countQuery =
+                    """
+                    select count(p) from PedidoJpaEntity p
+                    where p.dataPedido between :inicio and :fim
+                      and (:status is null or p.status = :status)
+                    """)
+    Page<PedidoJpaEntity> listarPorPeriodo(
+            LocalDate inicio, LocalDate fim, String status, Pageable pageable);
+
     List<PedidoJpaEntity> findByClienteId(UUID clienteId);
 }

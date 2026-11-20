@@ -16,4 +16,6 @@ public interface ProducaoRepository {
     List<LoteProducao> listarPorPeriodo(LocalDate inicio, LocalDate fim);
 
     Pagina<LoteProducao> listarPorPeriodo(LocalDate inicio, LocalDate fim, int pagina, int tamanho);
+
+    void excluir(UUID id);
 }

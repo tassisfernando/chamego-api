@@ -2,6 +2,8 @@ package com.tassisfernando.chamegoapi.infrastructure.web.pedido;
 
 import com.tassisfernando.chamegoapi.application.pedido.AtualizarPedidoComando;
 import com.tassisfernando.chamegoapi.application.pedido.AtualizarPedidoUseCase;
+import com.tassisfernando.chamegoapi.application.pedido.ConverterOrcamentoEmVendaUseCase;
+import com.tassisfernando.chamegoapi.application.pedido.ExcluirPedidoUseCase;
 import com.tassisfernando.chamegoapi.application.pedido.RegistrarPedidoComando;
 import com.tassisfernando.chamegoapi.application.pedido.RegistrarPedidoUseCase;
 import com.tassisfernando.chamegoapi.domain.compartilhado.PeriodoOperacao;
@@ -12,12 +14,15 @@ import com.tassisfernando.chamegoapi.domain.pedido.PedidoRepository;
 import com.tassisfernando.chamegoapi.domain.pedido.StatusPedido;
 import com.tassisfernando.chamegoapi.infrastructure.web.compartilhado.PaginaResposta;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -40,14 +44,20 @@ public class PedidoController {
 
     private final RegistrarPedidoUseCase registrarPedidoUseCase;
     private final AtualizarPedidoUseCase atualizarPedidoUseCase;
+    private final ConverterOrcamentoEmVendaUseCase converterOrcamentoEmVendaUseCase;
+    private final ExcluirPedidoUseCase excluirPedidoUseCase;
     private final PedidoRepository pedidoRepository;
 
     public PedidoController(
             RegistrarPedidoUseCase registrarPedidoUseCase,
             AtualizarPedidoUseCase atualizarPedidoUseCase,
+            ConverterOrcamentoEmVendaUseCase converterOrcamentoEmVendaUseCase,
+            ExcluirPedidoUseCase excluirPedidoUseCase,
             PedidoRepository pedidoRepository) {
         this.registrarPedidoUseCase = registrarPedidoUseCase;
         this.atualizarPedidoUseCase = atualizarPedidoUseCase;
+        this.converterOrcamentoEmVendaUseCase = converterOrcamentoEmVendaUseCase;
+        this.excluirPedidoUseCase = excluirPedidoUseCase;
         this.pedidoRepository = pedidoRepository;
     }
 
@@ -55,29 +65,36 @@ public class PedidoController {
     public PaginaResposta<PedidoResposta> listar(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(required = false) StatusPedido status,
             @PageableDefault(size = 20, sort = "dataPedido") Pageable pageable) {
         LocalDate inicioResolvido = PeriodoOperacao.inicioEfetivo(inicio);
         LocalDate fimResolvido = PeriodoOperacao.fimEfetivo(fim);
-        return PaginaResposta.mapear(
-                pedidoRepository.listarPorPeriodo(
-                        inicioResolvido, fimResolvido, pageable.getPageNumber(), pageable.getPageSize()),
-                PedidoResposta::de);
+        var pagina = pedidoRepository.listarPorPeriodo(
+                inicioResolvido,
+                fimResolvido,
+                status,
+                pageable.getPageNumber(),
+                pageable.getPageSize());
+        return PaginaResposta.mapear(pagina, PedidoResposta::de);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, Object> registrar(@Valid @RequestBody RegistrarPedidoRequisicao requisicao) {
+    public PedidoResposta registrar(@Valid @RequestBody RegistrarPedidoRequisicao requisicao) {
         Pedido pedido = registrarPedidoUseCase.executar(new RegistrarPedidoComando(
                 requisicao.clienteId(),
                 requisicao.dataPedido(),
                 requisicao.natureza() == null ? NaturezaPedido.VENDA : requisicao.natureza(),
                 requisicao.observacao(),
+                requisicao.descontoPercentual(),
+                requisicao.confirmarVendaEfetivo(),
                 requisicao.itens().stream().map(RegistrarPedidoRequisicao.ItemRequisicao::paraComando).toList()));
-        return Map.of(
-                "id", pedido.id(),
-                "status", pedido.status(),
-                "valorTotal", pedido.valorTotal().valor(),
-                "lucroBruto", pedido.lucroBruto().valor());
+        return PedidoResposta.de(pedido);
+    }
+
+    @PostMapping("/{id}/concretizar")
+    public PedidoResposta concretizar(@PathVariable UUID id) {
+        return PedidoResposta.de(converterOrcamentoEmVendaUseCase.executar(id));
     }
 
     @PutMapping("/{id}")
@@ -90,8 +107,15 @@ public class PedidoController {
                 requisicao.natureza(),
                 requisicao.status(),
                 requisicao.observacao(),
+                requisicao.descontoPercentual(),
                 requisicao.itens().stream().map(RegistrarPedidoRequisicao.ItemRequisicao::paraComando).toList()));
         return PedidoResposta.de(pedido);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluir(@PathVariable UUID id) {
+        excluirPedidoUseCase.executar(id);
     }
 
     public record AtualizarPedidoRequisicao(
@@ -100,6 +124,7 @@ public class PedidoController {
             NaturezaPedido natureza,
             StatusPedido status,
             String observacao,
+            @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal descontoPercentual,
             @NotEmpty @Valid List<RegistrarPedidoRequisicao.ItemRequisicao> itens) {
     }
 
@@ -110,6 +135,8 @@ public class PedidoController {
             StatusPedido status,
             NaturezaPedido natureza,
             String observacao,
+            BigDecimal descontoPercentual,
+            BigDecimal subtotalItens,
             BigDecimal valorTotal,
             BigDecimal lucroBruto,
             List<ItemResposta> itens) {
@@ -122,6 +149,8 @@ public class PedidoController {
                     pedido.status(),
                     pedido.natureza(),
                     pedido.observacao(),
+                    pedido.descontoPercentual().valor(),
+                    pedido.subtotalItens().valor(),
                     pedido.valorTotal().valor(),
                     pedido.lucroBruto().valor(),
                     pedido.itens().stream().map(ItemResposta::de).toList());
@@ -129,14 +158,21 @@ public class PedidoController {
     }
 
     public record ItemResposta(
-            UUID produtoId, int quantidade, BigDecimal precoUnitario, BigDecimal custoUnitario) {
+            UUID produtoId,
+            int quantidade,
+            BigDecimal precoUnitario,
+            BigDecimal custoUnitario,
+            BigDecimal descontoPercentual,
+            BigDecimal totalLiquido) {
 
         static ItemResposta de(ItemPedido item) {
             return new ItemResposta(
                     item.produtoId(),
                     item.quantidade(),
                     item.precoUnitario().valor(),
-                    item.custoUnitario().valor());
+                    item.custoUnitario().valor(),
+                    item.descontoPercentual().valor(),
+                    item.receitaBruta().valor());
         }
     }
 }

@@ -16,4 +16,6 @@ public interface DespesaRepository {
     List<Despesa> listarPorPeriodo(LocalDate inicio, LocalDate fim);
 
     Pagina<Despesa> listarPorPeriodo(LocalDate inicio, LocalDate fim, int pagina, int tamanho);
+
+    void excluir(UUID id);
 }

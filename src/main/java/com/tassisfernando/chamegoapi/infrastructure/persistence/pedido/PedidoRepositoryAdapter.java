@@ -1,6 +1,7 @@
 package com.tassisfernando.chamegoapi.infrastructure.persistence.pedido;
 
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
+import com.tassisfernando.chamegoapi.domain.compartilhado.PercentualDesconto;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.pedido.ItemPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.NaturezaPedido;
@@ -53,8 +54,29 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
     }
 
     @Override
+    public Pagina<Pedido> listarPorPeriodo(
+            LocalDate inicio, LocalDate fim, StatusPedido status, int pagina, int tamanho) {
+        String statusFiltro = status == null ? null : status.name();
+        Page<PedidoJpaEntity> page = jpaRepository.listarPorPeriodo(
+                inicio,
+                fim,
+                statusFiltro,
+                PageRequest.of(pagina, tamanho, Sort.by("dataPedido").descending()));
+        List<Pedido> conteudo = page.getContent().stream()
+                .map(entidade -> jpaRepository.buscarComItens(entidade.getId()).orElse(entidade))
+                .map(this::paraDominio)
+                .toList();
+        return Pagina.de(conteudo, page.getNumber(), page.getSize(), page.getTotalElements());
+    }
+
+    @Override
     public List<Pedido> listarPorCliente(UUID clienteId) {
         return jpaRepository.findByClienteId(clienteId).stream().map(this::paraDominio).toList();
+    }
+
+    @Override
+    public void excluir(UUID id) {
+        jpaRepository.deleteById(id);
     }
 
     private PedidoJpaEntity paraJpa(Pedido pedido) {
@@ -65,6 +87,7 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
         entidade.setStatus(pedido.status().name());
         entidade.setNatureza(pedido.natureza().name());
         entidade.setObservacao(pedido.observacao());
+        entidade.setDescontoPercentual(pedido.descontoPercentual().valor());
         entidade.getItens().clear();
         for (ItemPedido item : pedido.itens()) {
             ItemPedidoJpaEntity linha = new ItemPedidoJpaEntity();
@@ -74,6 +97,7 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
             linha.setQuantidade(item.quantidade());
             linha.setPrecoUnitario(item.precoUnitario().valor());
             linha.setCustoUnitario(item.custoUnitario().valor());
+            linha.setDescontoPercentual(item.descontoPercentual().valor());
             entidade.getItens().add(linha);
         }
         return entidade;
@@ -85,7 +109,8 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
                         item.getProdutoId(),
                         item.getQuantidade(),
                         Dinheiro.de(item.getPrecoUnitario()),
-                        Dinheiro.de(item.getCustoUnitario())))
+                        Dinheiro.de(item.getCustoUnitario()),
+                        PercentualDesconto.de(item.getDescontoPercentual())))
                 .toList();
         return Pedido.reconstituir(
                 entidade.getId(),
@@ -94,6 +119,7 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
                 StatusPedido.valueOf(entidade.getStatus()),
                 NaturezaPedido.valueOf(entidade.getNatureza()),
                 entidade.getObservacao(),
+                PercentualDesconto.de(entidade.getDescontoPercentual()),
                 itens);
     }
 }

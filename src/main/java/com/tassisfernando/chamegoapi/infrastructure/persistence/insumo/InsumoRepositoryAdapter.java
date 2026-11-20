@@ -7,6 +7,7 @@ import com.tassisfernando.chamegoapi.domain.insumo.CategoriaInsumo;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.insumo.Insumo;
 import com.tassisfernando.chamegoapi.domain.insumo.InsumoRepository;
+import com.tassisfernando.chamegoapi.infrastructure.persistence.produto.ProdutoInsumoJpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -20,9 +21,22 @@ import java.util.UUID;
 public class InsumoRepositoryAdapter implements InsumoRepository {
 
     private final InsumoJpaRepository jpaRepository;
+    private final ProdutoInsumoJpaRepository produtoInsumoJpaRepository;
+    private final com.tassisfernando.chamegoapi.infrastructure.persistence.despesa.DespesaJpaRepository
+            despesaJpaRepository;
+    private final com.tassisfernando.chamegoapi.infrastructure.persistence.producao.ItemConsumoProducaoJpaRepository
+            consumoProducaoJpaRepository;
 
-    public InsumoRepositoryAdapter(InsumoJpaRepository jpaRepository) {
+    public InsumoRepositoryAdapter(
+            InsumoJpaRepository jpaRepository,
+            ProdutoInsumoJpaRepository produtoInsumoJpaRepository,
+            com.tassisfernando.chamegoapi.infrastructure.persistence.despesa.DespesaJpaRepository despesaJpaRepository,
+            com.tassisfernando.chamegoapi.infrastructure.persistence.producao.ItemConsumoProducaoJpaRepository
+                    consumoProducaoJpaRepository) {
         this.jpaRepository = jpaRepository;
+        this.produtoInsumoJpaRepository = produtoInsumoJpaRepository;
+        this.despesaJpaRepository = despesaJpaRepository;
+        this.consumoProducaoJpaRepository = consumoProducaoJpaRepository;
     }
 
     @Override
@@ -71,6 +85,18 @@ public class InsumoRepositoryAdapter implements InsumoRepository {
         return jpaRepository.saveAll(insumos.stream().map(this::paraJpa).toList()).stream()
                 .map(this::paraDominio)
                 .toList();
+    }
+
+    @Override
+    public void excluir(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean possuiReferencias(UUID id) {
+        return produtoInsumoJpaRepository.existsByInsumoId(id)
+                || despesaJpaRepository.existsByInsumoId(id)
+                || consumoProducaoJpaRepository.existsByInsumoId(id);
     }
 
     private InsumoJpaEntity paraJpa(Insumo insumo) {

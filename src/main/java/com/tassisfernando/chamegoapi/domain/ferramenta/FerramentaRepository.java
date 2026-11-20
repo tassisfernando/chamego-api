@@ -15,4 +15,8 @@ public interface FerramentaRepository {
     List<Ferramenta> listarAtivas();
 
     Pagina<Ferramenta> listarAtivas(int pagina, int tamanho);
+
+    void excluir(UUID id);
+
+    boolean possuiReferencias(UUID id);
 }

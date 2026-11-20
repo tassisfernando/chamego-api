@@ -19,4 +19,8 @@ public interface ProdutoRepository {
     Pagina<Produto> buscarAtivos(String busca, int pagina, int tamanho);
 
     List<Produto> salvarTodos(List<Produto> produtos);
+
+    void excluir(UUID id);
+
+    boolean possuiReferencias(UUID id);
 }

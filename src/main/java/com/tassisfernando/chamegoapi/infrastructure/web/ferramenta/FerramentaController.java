@@ -1,5 +1,6 @@
 package com.tassisfernando.chamegoapi.infrastructure.web.ferramenta;
 
+import com.tassisfernando.chamegoapi.application.ferramenta.ExcluirFerramentaUseCase;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
 import com.tassisfernando.chamegoapi.domain.ferramenta.Ferramenta;
@@ -10,7 +11,9 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,9 +30,12 @@ import java.util.UUID;
 public class FerramentaController {
 
     private final FerramentaRepository ferramentaRepository;
+    private final ExcluirFerramentaUseCase excluirFerramentaUseCase;
 
-    public FerramentaController(FerramentaRepository ferramentaRepository) {
+    public FerramentaController(
+            FerramentaRepository ferramentaRepository, ExcluirFerramentaUseCase excluirFerramentaUseCase) {
         this.ferramentaRepository = ferramentaRepository;
+        this.excluirFerramentaUseCase = excluirFerramentaUseCase;
     }
 
     @GetMapping
@@ -43,6 +49,12 @@ public class FerramentaController {
     @GetMapping("/opcoes")
     public List<FerramentaResposta> opcoes() {
         return ferramentaRepository.listarAtivas().stream().map(FerramentaResposta::de).toList();
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluir(@PathVariable UUID id) {
+        excluirFerramentaUseCase.executar(id);
     }
 
     @PostMapping

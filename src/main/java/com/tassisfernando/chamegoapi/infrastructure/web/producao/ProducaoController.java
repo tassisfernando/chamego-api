@@ -2,6 +2,7 @@ package com.tassisfernando.chamegoapi.infrastructure.web.producao;
 
 import com.tassisfernando.chamegoapi.application.producao.AtualizarProducaoComando;
 import com.tassisfernando.chamegoapi.application.producao.AtualizarProducaoUseCase;
+import com.tassisfernando.chamegoapi.application.producao.ExcluirProducaoUseCase;
 import com.tassisfernando.chamegoapi.application.producao.RegistrarProducaoComando;
 import com.tassisfernando.chamegoapi.application.producao.RegistrarProducaoUseCase;
 import com.tassisfernando.chamegoapi.domain.compartilhado.PeriodoOperacao;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,14 +38,17 @@ public class ProducaoController {
 
     private final RegistrarProducaoUseCase registrarProducaoUseCase;
     private final AtualizarProducaoUseCase atualizarProducaoUseCase;
+    private final ExcluirProducaoUseCase excluirProducaoUseCase;
     private final ProducaoRepository producaoRepository;
 
     public ProducaoController(
             RegistrarProducaoUseCase registrarProducaoUseCase,
             AtualizarProducaoUseCase atualizarProducaoUseCase,
+            ExcluirProducaoUseCase excluirProducaoUseCase,
             ProducaoRepository producaoRepository) {
         this.registrarProducaoUseCase = registrarProducaoUseCase;
         this.atualizarProducaoUseCase = atualizarProducaoUseCase;
+        this.excluirProducaoUseCase = excluirProducaoUseCase;
         this.producaoRepository = producaoRepository;
     }
 
@@ -83,6 +88,12 @@ public class ProducaoController {
                 requisicao.quantidadeProduzida(),
                 requisicao.observacao()));
         return ProducaoResposta.de(lote);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluir(@PathVariable UUID id) {
+        excluirProducaoUseCase.executar(id);
     }
 
     public record Requisicao(

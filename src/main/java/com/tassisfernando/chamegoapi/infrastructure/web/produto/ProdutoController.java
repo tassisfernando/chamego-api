@@ -16,6 +16,8 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import com.tassisfernando.chamegoapi.application.produto.ExcluirProdutoUseCase;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,11 +41,15 @@ public class ProdutoController {
 
     private final ProdutoRepository produtoRepository;
     private final AtualizarProdutoUseCase atualizarProdutoUseCase;
+    private final ExcluirProdutoUseCase excluirProdutoUseCase;
 
     public ProdutoController(
-            ProdutoRepository produtoRepository, AtualizarProdutoUseCase atualizarProdutoUseCase) {
+            ProdutoRepository produtoRepository,
+            AtualizarProdutoUseCase atualizarProdutoUseCase,
+            ExcluirProdutoUseCase excluirProdutoUseCase) {
         this.produtoRepository = produtoRepository;
         this.atualizarProdutoUseCase = atualizarProdutoUseCase;
+        this.excluirProdutoUseCase = excluirProdutoUseCase;
     }
 
     @GetMapping
@@ -56,7 +62,13 @@ public class ProdutoController {
     }
 
     @GetMapping("/opcoes")
-    public List<ProdutoResposta> opcoes() {
+    public List<ProdutoResposta> opcoes(@RequestParam(required = false, name = "search") String search) {
+        String termo = search == null ? "" : search.trim();
+        if (!termo.isBlank()) {
+            return produtoRepository.buscarAtivos(termo, 0, 50).conteudo().stream()
+                    .map(ProdutoResposta::de)
+                    .toList();
+        }
         return produtoRepository.listarAtivos().stream().map(ProdutoResposta::de).toList();
     }
 
@@ -75,6 +87,12 @@ public class ProdutoController {
         }
 
         return ProdutoResposta.de(produtoRepository.salvar(produto));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluir(@PathVariable UUID id) {
+        excluirProdutoUseCase.executar(id);
     }
 
     @PutMapping("/{id}")

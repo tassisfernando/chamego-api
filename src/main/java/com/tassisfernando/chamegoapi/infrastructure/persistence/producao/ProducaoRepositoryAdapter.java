@@ -90,4 +90,9 @@ public class ProducaoRepositoryAdapter implements ProducaoRepository {
                 consumos,
                 entidade.getObservacao());
     }
+
+    @Override
+    public void excluir(UUID id) {
+        jpaRepository.deleteById(id);
+    }
 }

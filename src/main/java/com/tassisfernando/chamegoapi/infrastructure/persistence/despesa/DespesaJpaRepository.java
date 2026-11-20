@@ -13,4 +13,8 @@ public interface DespesaJpaRepository extends JpaRepository<DespesaJpaEntity, UU
     List<DespesaJpaEntity> findByDataDespesaBetween(LocalDate inicio, LocalDate fim);
 
     Page<DespesaJpaEntity> findByDataDespesaBetween(LocalDate inicio, LocalDate fim, Pageable pageable);
+
+    boolean existsByInsumoId(UUID insumoId);
+
+    boolean existsByFerramentaId(UUID ferramentaId);
 }

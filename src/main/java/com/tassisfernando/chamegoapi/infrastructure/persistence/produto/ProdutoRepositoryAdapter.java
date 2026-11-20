@@ -25,9 +25,20 @@ import java.util.UUID;
 public class ProdutoRepositoryAdapter implements ProdutoRepository {
 
     private final ProdutoJpaRepository jpaRepository;
+    private final com.tassisfernando.chamegoapi.infrastructure.persistence.pedido.ItemPedidoJpaRepository
+            itemPedidoJpaRepository;
+    private final com.tassisfernando.chamegoapi.infrastructure.persistence.producao.LoteProducaoJpaRepository
+            loteProducaoJpaRepository;
 
-    public ProdutoRepositoryAdapter(ProdutoJpaRepository jpaRepository) {
+    public ProdutoRepositoryAdapter(
+            ProdutoJpaRepository jpaRepository,
+            com.tassisfernando.chamegoapi.infrastructure.persistence.pedido.ItemPedidoJpaRepository
+                    itemPedidoJpaRepository,
+            com.tassisfernando.chamegoapi.infrastructure.persistence.producao.LoteProducaoJpaRepository
+                    loteProducaoJpaRepository) {
         this.jpaRepository = jpaRepository;
+        this.itemPedidoJpaRepository = itemPedidoJpaRepository;
+        this.loteProducaoJpaRepository = loteProducaoJpaRepository;
     }
 
     @Override
@@ -76,6 +87,16 @@ public class ProdutoRepositoryAdapter implements ProdutoRepository {
         return jpaRepository.saveAll(produtos.stream().map(this::paraJpa).toList()).stream()
                 .map(this::paraDominio)
                 .toList();
+    }
+
+    @Override
+    public void excluir(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean possuiReferencias(UUID id) {
+        return itemPedidoJpaRepository.existsByProdutoId(id) || loteProducaoJpaRepository.existsByProdutoId(id);
     }
 
     private ProdutoJpaEntity paraJpa(Produto produto) {

@@ -14,5 +14,6 @@ public record AtualizarPedidoComando(
         NaturezaPedido natureza,
         StatusPedido status,
         String observacao,
+        java.math.BigDecimal descontoPercentual,
         List<ItemPedidoComando> itens) {
 }

@@ -18,9 +18,14 @@ import java.util.UUID;
 public class FerramentaRepositoryAdapter implements FerramentaRepository {
 
     private final FerramentaJpaRepository jpaRepository;
+    private final com.tassisfernando.chamegoapi.infrastructure.persistence.despesa.DespesaJpaRepository
+            despesaJpaRepository;
 
-    public FerramentaRepositoryAdapter(FerramentaJpaRepository jpaRepository) {
+    public FerramentaRepositoryAdapter(
+            FerramentaJpaRepository jpaRepository,
+            com.tassisfernando.chamegoapi.infrastructure.persistence.despesa.DespesaJpaRepository despesaJpaRepository) {
         this.jpaRepository = jpaRepository;
+        this.despesaJpaRepository = despesaJpaRepository;
     }
 
     @Override
@@ -47,6 +52,16 @@ public class FerramentaRepositoryAdapter implements FerramentaRepository {
                 page.getNumber(),
                 page.getSize(),
                 page.getTotalElements());
+    }
+
+    @Override
+    public void excluir(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean possuiReferencias(UUID id) {
+        return despesaJpaRepository.existsByFerramentaId(id);
     }
 
     private FerramentaJpaEntity paraJpa(Ferramenta ferramenta) {

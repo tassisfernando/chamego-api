@@ -19,4 +19,8 @@ public interface InsumoRepository {
     Pagina<Insumo> buscarAtivos(String busca, int pagina, int tamanho);
 
     List<Insumo> salvarTodos(List<Insumo> insumos);
+
+    void excluir(UUID id);
+
+    boolean possuiReferencias(UUID id);
 }

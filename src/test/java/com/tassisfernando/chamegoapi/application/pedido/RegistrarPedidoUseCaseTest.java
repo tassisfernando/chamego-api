@@ -51,8 +51,9 @@ class RegistrarPedidoUseCaseTest {
 
     @BeforeEach
     void setUp() {
+        var pedidoEstoqueService = new PedidoEstoqueService(produtoRepository, movimentoEstoqueRepository);
         useCase = new RegistrarPedidoUseCase(
-                pedidoRepository, clienteRepository, produtoRepository, movimentoEstoqueRepository);
+                pedidoRepository, clienteRepository, produtoRepository, pedidoEstoqueService);
         lenient().when(pedidoRepository.salvar(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
@@ -68,7 +69,9 @@ class RegistrarPedidoUseCaseTest {
                 LocalDate.of(2026, 1, 24),
                 NaturezaPedido.VENDA,
                 null,
-                List.of(new ItemPedidoComando(produto.id(), 2, null))));
+                null,
+                true,
+                List.of(new ItemPedidoComando(produto.id(), 2, null, null))));
 
         assertEquals(StatusPedido.CONFIRMADO, pedido.status());
         assertEquals(brl("65.80"), pedido.valorTotal());
@@ -76,6 +79,28 @@ class RegistrarPedidoUseCaseTest {
         verify(produtoRepository).salvar(produto);
         verify(movimentoEstoqueRepository).salvar(any());
         verify(pedidoRepository).salvar(pedido);
+    }
+
+    @Test
+    void deveSalvarOrcamentoSemBaixarEstoque() {
+        var cliente = cliente("Cliente Orçamento");
+        Produto produto = velaComEstoque(5);
+        when(clienteRepository.buscarPorId(cliente.id())).thenReturn(Optional.of(cliente));
+        when(produtoRepository.buscarPorId(produto.id())).thenReturn(Optional.of(produto));
+
+        Pedido pedido = useCase.executar(new RegistrarPedidoComando(
+                cliente.id(),
+                LocalDate.now(),
+                NaturezaPedido.VENDA,
+                null,
+                null,
+                false,
+                List.of(new ItemPedidoComando(produto.id(), 2, null, null))));
+
+        assertEquals(StatusPedido.ORCAMENTO, pedido.status());
+        assertEquals(5, produto.estoqueAtual());
+        verify(produtoRepository, never()).salvar(any());
+        verify(movimentoEstoqueRepository, never()).salvar(any());
     }
 
     @Test
@@ -90,7 +115,9 @@ class RegistrarPedidoUseCaseTest {
                         LocalDate.now(),
                         NaturezaPedido.VENDA,
                         null,
-                        List.of(new ItemPedidoComando(UUID.randomUUID(), 1, null)))));
+                        null,
+                        true,
+                        List.of(new ItemPedidoComando(UUID.randomUUID(), 1, null, null)))));
 
         verify(pedidoRepository, never()).salvar(any());
     }
@@ -109,6 +136,8 @@ class RegistrarPedidoUseCaseTest {
                         LocalDate.now(),
                         NaturezaPedido.VENDA,
                         null,
-                        List.of(new ItemPedidoComando(produto.id(), 3, null)))));
+                        null,
+                        true,
+                        List.of(new ItemPedidoComando(produto.id(), 3, null, null)))));
     }
 }

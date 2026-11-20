@@ -28,4 +28,6 @@ public interface LoteProducaoJpaRepository extends JpaRepository<LoteProducaoJpa
             countQuery =
                     "select count(l) from LoteProducaoJpaEntity l where l.dataProducao between :inicio and :fim")
     Page<LoteProducaoJpaEntity> listarPorPeriodo(LocalDate inicio, LocalDate fim, Pageable pageable);
+
+    boolean existsByProdutoId(UUID produtoId);
 }

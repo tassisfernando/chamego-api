@@ -86,4 +86,9 @@ public class DespesaRepositoryAdapter implements DespesaRepository {
                 entidade.getFerramentaId(),
                 entidade.getObservacao());
     }
+
+    @Override
+    public void excluir(UUID id) {
+        jpaRepository.deleteById(id);
+    }
 }
