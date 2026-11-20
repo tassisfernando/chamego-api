@@ -2,6 +2,7 @@ package com.tassisfernando.chamegoapi.application.notificacao;
 
 import com.tassisfernando.chamegoapi.domain.cliente.Cliente;
 import com.tassisfernando.chamegoapi.domain.cliente.ClienteRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +12,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 @Service
+@ConditionalOnProperty(prefix = "chamego.notificacao", name = "habilitada", havingValue = "true")
 public class NotifyDailyBirthdaysUseCase {
 
     public static final ZoneId FUSO_OPERACAO = ZoneId.of("America/Sao_Paulo");
