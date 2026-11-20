@@ -21,10 +21,9 @@ public class CanalAniversarioNotificationAdapter implements BirthdayNotification
 
     public CanalAniversarioNotificationAdapter(
             ChamegoNotificacaoProperties properties,
-            RestClient.Builder restClientBuilder,
             org.springframework.beans.factory.ObjectProvider<JavaMailSender> mailSenderProvider) {
         this.properties = properties;
-        this.restClient = restClientBuilder.build();
+        this.restClient = RestClient.builder().build();
         this.mailSender = mailSenderProvider.getIfAvailable();
     }
 

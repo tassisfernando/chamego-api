@@ -33,7 +33,13 @@ class CadastrarClienteUseCaseTest {
     @Test
     void deveCadastrarClienteComDadosDaPlanilha() {
         Cliente cliente = useCase.executar(new CadastrarClienteComando(
-                "Tácila Tayane", "31987068258", "IPATINGA", "MG", LocalDate.of(1990, 7, 3)));
+                "Tácila Tayane",
+                "31987068258",
+                "IPATINGA",
+                "MG",
+                LocalDate.of(1990, 7, 3),
+                null,
+                null));
 
         ArgumentCaptor<Cliente> captor = ArgumentCaptor.forClass(Cliente.class);
         verify(clienteRepository).salvar(captor.capture());

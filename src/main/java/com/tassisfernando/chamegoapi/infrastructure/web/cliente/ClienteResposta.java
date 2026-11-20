@@ -9,10 +9,12 @@ public record ClienteResposta(
         UUID id,
         String nome,
         String telefone,
+        String email,
         String cidade,
         String estado,
         LocalDate dataCadastro,
         LocalDate dataNascimento,
         StatusCupom statusCupom,
+        String observacao,
         boolean ativo) {
 }

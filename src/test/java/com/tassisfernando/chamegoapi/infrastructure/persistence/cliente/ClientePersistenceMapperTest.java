@@ -20,6 +20,7 @@ class ClientePersistenceMapperTest {
                 UUID.randomUUID(),
                 "Maria Irene Ferreira",
                 "31988518474",
+                null,
                 "IPATINGA",
                 "MG",
                 LocalDate.of(2025, 12, 18),

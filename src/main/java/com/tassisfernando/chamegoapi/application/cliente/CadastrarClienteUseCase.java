@@ -21,7 +21,9 @@ public class CadastrarClienteUseCase {
                 comando.telefone(),
                 comando.cidade(),
                 comando.estado(),
-                comando.dataNascimento());
+                comando.dataNascimento(),
+                comando.email(),
+                comando.observacao());
         return clienteRepository.salvar(cliente);
     }
 }

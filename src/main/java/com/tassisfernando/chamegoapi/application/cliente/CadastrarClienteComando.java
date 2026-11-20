@@ -7,5 +7,7 @@ public record CadastrarClienteComando(
         String telefone,
         String cidade,
         String estado,
-        LocalDate dataNascimento) {
+        LocalDate dataNascimento,
+        String email,
+        String observacao) {
 }

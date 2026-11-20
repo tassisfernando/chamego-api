@@ -12,6 +12,7 @@ public class ClientePersistenceMapper {
         entidade.setId(cliente.id());
         entidade.setNome(cliente.nome());
         entidade.setTelefone(cliente.telefone());
+        entidade.setEmail(cliente.email());
         entidade.setCidade(cliente.cidade());
         entidade.setEstado(cliente.estado());
         entidade.setDataCadastro(cliente.dataCadastro());
@@ -30,6 +31,7 @@ public class ClientePersistenceMapper {
                 entidade.getId(),
                 entidade.getNome(),
                 entidade.getTelefone(),
+                entidade.getEmail(),
                 entidade.getCidade(),
                 entidade.getEstado(),
                 entidade.getDataCadastro(),

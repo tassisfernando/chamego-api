@@ -68,7 +68,9 @@ public class ClienteController {
                 requisicao.telefone(),
                 requisicao.cidade(),
                 requisicao.estado(),
-                requisicao.dataNascimento()));
+                requisicao.dataNascimento(),
+                requisicao.email(),
+                requisicao.observacao()));
         return mapper.paraResposta(cliente);
     }
 

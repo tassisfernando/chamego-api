@@ -22,6 +22,10 @@ public class ClienteJpaEntity {
     private String nome;
 
     private String telefone;
+
+    @Column(length = 255)
+    private String email;
+
     private String cidade;
     private String estado;
 
@@ -79,6 +83,14 @@ public class ClienteJpaEntity {
 
     public void setTelefone(String telefone) {
         this.telefone = telefone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getCidade() {

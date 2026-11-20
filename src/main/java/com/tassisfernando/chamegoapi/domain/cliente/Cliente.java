@@ -12,6 +12,7 @@ public final class Cliente {
     private final UUID id;
     private String nome;
     private String telefone;
+    private String email;
     private String cidade;
     private String estado;
     private LocalDate dataCadastro;
@@ -24,6 +25,7 @@ public final class Cliente {
             UUID id,
             String nome,
             String telefone,
+            String email,
             String cidade,
             String estado,
             LocalDate dataCadastro,
@@ -34,6 +36,7 @@ public final class Cliente {
         this.id = id;
         this.nome = exigirNome(nome);
         this.telefone = telefone;
+        this.email = email == null || email.isBlank() ? null : email.trim();
         this.cidade = cidade;
         this.estado = estado;
         this.dataCadastro = dataCadastro == null ? LocalDate.now() : dataCadastro;
@@ -49,16 +52,28 @@ public final class Cliente {
             String cidade,
             String estado,
             LocalDate dataNascimento) {
+        return novo(nome, telefone, cidade, estado, dataNascimento, null, null);
+    }
+
+    public static Cliente novo(
+            String nome,
+            String telefone,
+            String cidade,
+            String estado,
+            LocalDate dataNascimento,
+            String email,
+            String observacao) {
         return new Cliente(
                 UUID.randomUUID(),
                 nome,
                 telefone,
+                email,
                 cidade,
                 estado,
                 LocalDate.now(),
                 dataNascimento,
                 StatusCupom.NAO_DEFINIDO,
-                null,
+                observacao == null || observacao.isBlank() ? null : observacao.trim(),
                 true);
     }
 
@@ -66,6 +81,7 @@ public final class Cliente {
             UUID id,
             String nome,
             String telefone,
+            String email,
             String cidade,
             String estado,
             LocalDate dataCadastro,
@@ -77,6 +93,7 @@ public final class Cliente {
                 id,
                 nome,
                 telefone,
+                email,
                 cidade,
                 estado,
                 dataCadastro,
@@ -136,6 +153,10 @@ public final class Cliente {
 
     public String telefone() {
         return telefone;
+    }
+
+    public String email() {
+        return email;
     }
 
     public String cidade() {
