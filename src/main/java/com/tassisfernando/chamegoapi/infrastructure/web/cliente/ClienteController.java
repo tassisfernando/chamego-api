@@ -103,7 +103,13 @@ public class ClienteController {
     }
 
     @GetMapping("/opcoes")
-    public List<ClienteResposta> opcoes() {
+    public List<ClienteResposta> opcoes(@RequestParam(required = false, name = "search") String search) {
+        String termo = search == null ? "" : search.trim();
+        if (!termo.isBlank()) {
+            return clienteRepository.buscarAtivos(termo, 0, 50).conteudo().stream()
+                    .map(mapper::paraResposta)
+                    .toList();
+        }
         return clienteRepository.listarAtivos().stream().map(mapper::paraResposta).toList();
     }
 
