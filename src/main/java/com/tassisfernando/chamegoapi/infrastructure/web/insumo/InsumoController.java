@@ -56,8 +56,12 @@ public class InsumoController {
     }
 
     @GetMapping("/opcoes")
-    public List<InsumoResposta> opcoes() {
-        return insumoRepository.listarAtivos().stream().map(InsumoResposta::de).toList();
+    public List<InsumoResposta> opcoes(@RequestParam(required = false, name = "search") String search) {
+        String termo = search == null ? "" : search.trim();
+        if (termo.isBlank()) {
+            return insumoRepository.listarAtivos().stream().map(InsumoResposta::de).toList();
+        }
+        return insumoRepository.buscarAtivos(termo, 0, 50).conteudo().stream().map(InsumoResposta::de).toList();
     }
 
     @PostMapping

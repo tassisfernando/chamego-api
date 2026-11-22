@@ -33,6 +33,9 @@ public class PrecificacaoItemJpaEntity {
 
     private String descricao;
 
+    @Column(name = "nome_material")
+    private String nomeMaterial;
+
     @Column(nullable = false)
     private BigDecimal quantidade;
 
@@ -103,6 +106,14 @@ public class PrecificacaoItemJpaEntity {
 
     public void setDescricao(String descricao) {
         this.descricao = descricao;
+    }
+
+    public String getNomeMaterial() {
+        return nomeMaterial;
+    }
+
+    public void setNomeMaterial(String nomeMaterial) {
+        this.nomeMaterial = nomeMaterial;
     }
 
     public BigDecimal getQuantidade() {

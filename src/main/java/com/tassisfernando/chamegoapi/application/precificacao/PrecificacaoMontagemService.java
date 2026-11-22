@@ -70,20 +70,43 @@ public class PrecificacaoMontagemService {
 
         return switch (comando.tipo()) {
             case INSUMO -> {
-                Insumo insumo = insumoRepository
-                        .buscarPorId(comando.insumoId())
-                        .orElseThrow(() -> EntidadeNaoEncontrada.de("Insumo", comando.insumoId()));
+                if (comando.insumoId() != null) {
+                    Insumo insumo = insumoRepository
+                            .buscarPorId(comando.insumoId())
+                            .orElseThrow(() -> EntidadeNaoEncontrada.de("Insumo", comando.insumoId()));
+                    yield montarMaterial(
+                            TipoItemPrecificacao.INSUMO,
+                            insumo.id(),
+                            null,
+                            null,
+                            insumo.nome(),
+                            modo,
+                            quantidade,
+                            comando.unidadeMedida() != null ? comando.unidadeMedida() : insumo.unidadeMedida(),
+                            comando.custoUnitarioInformado() != null
+                                    ? Dinheiro.de(comando.custoUnitarioInformado())
+                                    : insumo.custoMedio(),
+                            comando);
+                }
+                String nome = comando.nomeMaterial() != null ? comando.nomeMaterial() : comando.descricao();
+                if (nome == null || nome.isBlank()) {
+                    throw new RegraDeNegocioViolada("nome do material avulso é obrigatório");
+                }
+                nome = nome.trim();
                 yield montarMaterial(
                         TipoItemPrecificacao.INSUMO,
-                        insumo.id(),
                         null,
-                        insumo.nome(),
+                        null,
+                        nome,
+                        nome,
                         modo,
                         quantidade,
-                        comando.unidadeMedida() != null ? comando.unidadeMedida() : insumo.unidadeMedida(),
+                        comando.unidadeMedida() != null
+                                ? comando.unidadeMedida()
+                                : com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida.UN,
                         comando.custoUnitarioInformado() != null
                                 ? Dinheiro.de(comando.custoUnitarioInformado())
-                                : insumo.custoMedio(),
+                                : Dinheiro.zero(),
                         comando);
             }
             case PRODUTO -> {
@@ -103,6 +126,7 @@ public class PrecificacaoMontagemService {
                         TipoItemPrecificacao.EXTRA,
                         null,
                         null,
+                        null,
                         comando.descricao().trim(),
                         modo,
                         quantidade,
@@ -119,6 +143,7 @@ public class PrecificacaoMontagemService {
             TipoItemPrecificacao tipo,
             UUID insumoId,
             UUID produtoId,
+            String nomeMaterial,
             String descricao,
             ModoCalculoMaterial modo,
             BigDecimal quantidadeUsada,
@@ -133,6 +158,7 @@ public class PrecificacaoMontagemService {
                     tipo,
                     insumoId,
                     produtoId,
+                    nomeMaterial,
                     descricao,
                     ModoCalculoMaterial.FRACIONADO,
                     quantidadeUsada,
@@ -148,6 +174,7 @@ public class PrecificacaoMontagemService {
                 tipo,
                 insumoId,
                 produtoId,
+                nomeMaterial,
                 descricao,
                 ModoCalculoMaterial.UNITARIO,
                 quantidadeUsada,

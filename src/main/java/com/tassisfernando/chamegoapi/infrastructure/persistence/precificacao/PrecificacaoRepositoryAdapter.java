@@ -75,6 +75,7 @@ public class PrecificacaoRepositoryAdapter implements PrecificacaoRepository {
             linha.setProdutoId(item.produtoId());
             linha.setInsumoId(item.insumoId());
             linha.setDescricao(item.descricao());
+            linha.setNomeMaterial(item.nomeMaterial());
             linha.setQuantidade(item.quantidade());
             linha.setUnidadeMedida(
                     item.unidadeMedida() == null ? null : item.unidadeMedida().name());
@@ -133,6 +134,7 @@ public class PrecificacaoRepositoryAdapter implements PrecificacaoRepository {
                         TipoItemPrecificacao.valueOf(item.getTipoItem()),
                         item.getProdutoId(),
                         item.getInsumoId(),
+                        item.getNomeMaterial(),
                         item.getDescricao(),
                         item.getModoCalculo() == null
                                 ? ModoCalculoMaterial.UNITARIO

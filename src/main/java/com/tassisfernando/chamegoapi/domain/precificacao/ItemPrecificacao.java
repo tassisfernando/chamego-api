@@ -11,6 +11,7 @@ public record ItemPrecificacao(
         TipoItemPrecificacao tipo,
         UUID produtoId,
         UUID insumoId,
+        String nomeMaterial,
         String descricao,
         ModoCalculoMaterial modoCalculo,
         BigDecimal quantidade,
@@ -19,6 +20,13 @@ public record ItemPrecificacao(
         Dinheiro valorEmbalagem,
         BigDecimal quantidadeEmbalagem,
         UnidadeMedida unidadeEmbalagem) {
+
+    public String rotuloExibicao() {
+        if (descricao != null && !descricao.isBlank()) {
+            return descricao;
+        }
+        return nomeMaterial;
+    }
 
     public Dinheiro subtotal() {
         if (tipo == TipoItemPrecificacao.PRODUTO) {
@@ -41,6 +49,7 @@ public record ItemPrecificacao(
                 TipoItemPrecificacao.INSUMO,
                 insumoId,
                 null,
+                null,
                 descricao,
                 ModoCalculoMaterial.UNITARIO,
                 quantidade,
@@ -58,6 +67,7 @@ public record ItemPrecificacao(
                 TipoItemPrecificacao.PRODUTO,
                 produtoId,
                 null,
+                null,
                 descricao,
                 ModoCalculoMaterial.UNITARIO,
                 quantidade,
@@ -74,6 +84,7 @@ public record ItemPrecificacao(
                 null,
                 null,
                 descricao,
+                descricao,
                 ModoCalculoMaterial.UNITARIO,
                 quantidade,
                 UnidadeMedida.UN,
@@ -87,6 +98,7 @@ public record ItemPrecificacao(
             TipoItemPrecificacao tipo,
             UUID insumoId,
             UUID produtoId,
+            String nomeMaterial,
             String descricao,
             ModoCalculoMaterial modoCalculo,
             BigDecimal quantidadeUsada,
@@ -100,6 +112,7 @@ public record ItemPrecificacao(
                 tipo,
                 produtoId,
                 insumoId,
+                nomeMaterial,
                 descricao,
                 modoCalculo == null ? ModoCalculoMaterial.UNITARIO : modoCalculo,
                 quantidadeUsada,
@@ -115,6 +128,7 @@ public record ItemPrecificacao(
             TipoItemPrecificacao tipo,
             UUID produtoId,
             UUID insumoId,
+            String nomeMaterial,
             String descricao,
             ModoCalculoMaterial modoCalculo,
             BigDecimal quantidade,
@@ -128,6 +142,7 @@ public record ItemPrecificacao(
                 tipo,
                 produtoId,
                 insumoId,
+                nomeMaterial,
                 descricao,
                 modoCalculo == null ? ModoCalculoMaterial.UNITARIO : modoCalculo,
                 quantidade,

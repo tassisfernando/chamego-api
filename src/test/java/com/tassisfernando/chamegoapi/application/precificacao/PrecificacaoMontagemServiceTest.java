@@ -21,6 +21,7 @@ import static com.tassisfernando.chamegoapi.suporte.FixturesDominio.ceraComEstoq
 import static com.tassisfernando.chamegoapi.suporte.FixturesDominio.quantidade;
 import static com.tassisfernando.chamegoapi.suporte.FixturesDominio.velaComEstoque;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +50,7 @@ class PrecificacaoMontagemServiceTest {
                 null,
                 cera.id(),
                 null,
+                null,
                 ModoCalculoMaterial.UNITARIO,
                 new BigDecimal("200"),
                 UnidadeMedida.G,
@@ -63,6 +65,29 @@ class PrecificacaoMontagemServiceTest {
     }
 
     @Test
+    void montaMaterialAvulsoSemInsumoId() {
+        var comando = new LinhaPrecificacaoComando(
+                TipoItemPrecificacao.INSUMO,
+                null,
+                null,
+                "Fita de Cetim Dourada",
+                null,
+                ModoCalculoMaterial.UNITARIO,
+                BigDecimal.ONE,
+                UnidadeMedida.UN,
+                new BigDecimal("2.00"),
+                null,
+                null,
+                null);
+
+        ItemPrecificacao item = service.montarItens(List.of(comando)).getFirst();
+
+        assertNull(item.insumoId());
+        assertEquals("Fita de Cetim Dourada", item.nomeMaterial());
+        assertEquals(0, new BigDecimal("2.00").compareTo(item.subtotal().valor()));
+    }
+
+    @Test
     void somaCustoKitComDoisProdutosEExtra() {
         var vela = velaComEstoque(10);
         when(produtoRepository.buscarPorId(vela.id())).thenReturn(Optional.of(vela));
@@ -71,6 +96,7 @@ class PrecificacaoMontagemServiceTest {
                 new LinhaPrecificacaoComando(
                         TipoItemPrecificacao.PRODUTO,
                         vela.id(),
+                        null,
                         null,
                         null,
                         ModoCalculoMaterial.UNITARIO,
@@ -82,6 +108,7 @@ class PrecificacaoMontagemServiceTest {
                         null),
                 new LinhaPrecificacaoComando(
                         TipoItemPrecificacao.EXTRA,
+                        null,
                         null,
                         null,
                         "Caixa presente",
@@ -110,6 +137,7 @@ class PrecificacaoMontagemServiceTest {
                         vela.id(),
                         null,
                         null,
+                        null,
                         ModoCalculoMaterial.UNITARIO,
                         BigDecimal.ONE,
                         null,
@@ -121,7 +149,8 @@ class PrecificacaoMontagemServiceTest {
                         TipoItemPrecificacao.EXTRA,
                         null,
                         null,
-                        "Sabonete",
+                        null,
+                        "Escaldas-pés Lavanda",
                         ModoCalculoMaterial.UNITARIO,
                         BigDecimal.ONE,
                         UnidadeMedida.UN,
@@ -130,10 +159,11 @@ class PrecificacaoMontagemServiceTest {
                         null,
                         null),
                 new LinhaPrecificacaoComando(
-                        TipoItemPrecificacao.EXTRA,
+                        TipoItemPrecificacao.INSUMO,
                         null,
                         null,
-                        "Fita cetim",
+                        "Saquinho de Organza",
+                        null,
                         ModoCalculoMaterial.FRACIONADO,
                         new BigDecimal("60"),
                         UnidadeMedida.CM,
@@ -144,7 +174,6 @@ class PrecificacaoMontagemServiceTest {
 
         Dinheiro total = service.custoTotal(service.montarItens(comandos));
 
-        // vela 16.45 + sabonete 8 + fita (20/1000cm * 60cm) = 1.20 => 25.65
         assertEquals(0, new BigDecimal("25.65").compareTo(total.valor()));
     }
 

@@ -11,6 +11,7 @@ public record LinhaPrecificacaoComando(
         TipoItemPrecificacao tipo,
         UUID produtoId,
         UUID insumoId,
+        String nomeMaterial,
         String descricao,
         ModoCalculoMaterial modoCalculo,
         BigDecimal quantidade,
