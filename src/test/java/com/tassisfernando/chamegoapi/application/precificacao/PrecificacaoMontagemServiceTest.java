@@ -4,6 +4,7 @@ import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
 import com.tassisfernando.chamegoapi.domain.insumo.InsumoRepository;
 import com.tassisfernando.chamegoapi.domain.precificacao.ItemPrecificacao;
+import com.tassisfernando.chamegoapi.domain.precificacao.ModoCalculoMaterial;
 import com.tassisfernando.chamegoapi.domain.precificacao.TipoItemPrecificacao;
 import com.tassisfernando.chamegoapi.domain.produto.ProdutoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,8 +49,12 @@ class PrecificacaoMontagemServiceTest {
                 null,
                 cera.id(),
                 null,
+                ModoCalculoMaterial.UNITARIO,
                 new BigDecimal("200"),
                 UnidadeMedida.G,
+                null,
+                null,
+                null,
                 null);
 
         ItemPrecificacao item = service.montarItens(List.of(comando)).getFirst();
@@ -68,7 +73,11 @@ class PrecificacaoMontagemServiceTest {
                         vela.id(),
                         null,
                         null,
+                        ModoCalculoMaterial.UNITARIO,
                         new BigDecimal("2"),
+                        null,
+                        null,
+                        null,
                         null,
                         null),
                 new LinhaPrecificacaoComando(
@@ -76,14 +85,67 @@ class PrecificacaoMontagemServiceTest {
                         null,
                         null,
                         "Caixa presente",
+                        ModoCalculoMaterial.UNITARIO,
                         new BigDecimal("1"),
+                        UnidadeMedida.UN,
+                        new BigDecimal("5.50"),
                         null,
-                        new BigDecimal("5.50")));
+                        null,
+                        null));
 
         List<ItemPrecificacao> itens = service.montarItens(comandos);
         Dinheiro total = service.custoTotal(itens);
 
         assertEquals(0, new BigDecimal("38.40").compareTo(total.valor()));
+    }
+
+    @Test
+    void somaKitComVelaExtraUnitarioEFitaFracionada() {
+        var vela = velaComEstoque(10);
+        when(produtoRepository.buscarPorId(vela.id())).thenReturn(Optional.of(vela));
+
+        var comandos = List.of(
+                new LinhaPrecificacaoComando(
+                        TipoItemPrecificacao.PRODUTO,
+                        vela.id(),
+                        null,
+                        null,
+                        ModoCalculoMaterial.UNITARIO,
+                        BigDecimal.ONE,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null),
+                new LinhaPrecificacaoComando(
+                        TipoItemPrecificacao.EXTRA,
+                        null,
+                        null,
+                        "Sabonete",
+                        ModoCalculoMaterial.UNITARIO,
+                        BigDecimal.ONE,
+                        UnidadeMedida.UN,
+                        new BigDecimal("8.00"),
+                        null,
+                        null,
+                        null),
+                new LinhaPrecificacaoComando(
+                        TipoItemPrecificacao.EXTRA,
+                        null,
+                        null,
+                        "Fita cetim",
+                        ModoCalculoMaterial.FRACIONADO,
+                        new BigDecimal("60"),
+                        UnidadeMedida.CM,
+                        null,
+                        new BigDecimal("20.00"),
+                        new BigDecimal("10"),
+                        UnidadeMedida.MT));
+
+        Dinheiro total = service.custoTotal(service.montarItens(comandos));
+
+        // vela 16.45 + sabonete 8 + fita (20/1000cm * 60cm) = 1.20 => 25.65
+        assertEquals(0, new BigDecimal("25.65").compareTo(total.valor()));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.tassisfernando.chamegoapi.application.precificacao;
 
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
+import com.tassisfernando.chamegoapi.domain.precificacao.ModoCalculoMaterial;
 import com.tassisfernando.chamegoapi.domain.precificacao.TipoItemPrecificacao;
 
 import java.math.BigDecimal;
@@ -11,6 +12,10 @@ public record LinhaPrecificacaoComando(
         UUID produtoId,
         UUID insumoId,
         String descricao,
+        ModoCalculoMaterial modoCalculo,
         BigDecimal quantidade,
         UnidadeMedida unidadeMedida,
-        BigDecimal custoUnitarioInformado) {}
+        BigDecimal custoUnitarioInformado,
+        BigDecimal valorEmbalagem,
+        BigDecimal quantidadeEmbalagem,
+        UnidadeMedida unidadeEmbalagem) {}

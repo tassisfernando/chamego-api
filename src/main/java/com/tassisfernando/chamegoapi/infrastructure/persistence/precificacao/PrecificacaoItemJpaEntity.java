@@ -42,6 +42,21 @@ public class PrecificacaoItemJpaEntity {
     @Column(name = "custo_unitario", nullable = false)
     private BigDecimal custoUnitario;
 
+    @Column(name = "modo_calculo", nullable = false)
+    private String modoCalculo = "UNITARIO";
+
+    @Column(name = "valor_embalagem")
+    private BigDecimal valorEmbalagem;
+
+    @Column(name = "quantidade_embalagem")
+    private BigDecimal quantidadeEmbalagem;
+
+    @Column(name = "unidade_embalagem")
+    private String unidadeEmbalagem;
+
+    @Column(name = "subtotal", nullable = false)
+    private BigDecimal subtotal = BigDecimal.ZERO;
+
     public UUID getId() {
         return id;
     }
@@ -112,5 +127,45 @@ public class PrecificacaoItemJpaEntity {
 
     public void setCustoUnitario(BigDecimal custoUnitario) {
         this.custoUnitario = custoUnitario;
+    }
+
+    public String getModoCalculo() {
+        return modoCalculo;
+    }
+
+    public void setModoCalculo(String modoCalculo) {
+        this.modoCalculo = modoCalculo;
+    }
+
+    public BigDecimal getValorEmbalagem() {
+        return valorEmbalagem;
+    }
+
+    public void setValorEmbalagem(BigDecimal valorEmbalagem) {
+        this.valorEmbalagem = valorEmbalagem;
+    }
+
+    public BigDecimal getQuantidadeEmbalagem() {
+        return quantidadeEmbalagem;
+    }
+
+    public void setQuantidadeEmbalagem(BigDecimal quantidadeEmbalagem) {
+        this.quantidadeEmbalagem = quantidadeEmbalagem;
+    }
+
+    public String getUnidadeEmbalagem() {
+        return unidadeEmbalagem;
+    }
+
+    public void setUnidadeEmbalagem(String unidadeEmbalagem) {
+        this.unidadeEmbalagem = unidadeEmbalagem;
+    }
+
+    public BigDecimal getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
     }
 }

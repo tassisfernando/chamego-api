@@ -12,18 +12,43 @@ public record ItemPrecificacao(
         UUID produtoId,
         UUID insumoId,
         String descricao,
+        ModoCalculoMaterial modoCalculo,
         BigDecimal quantidade,
         UnidadeMedida unidadeMedida,
-        Dinheiro custoUnitario) {
+        Dinheiro custoUnitario,
+        Dinheiro valorEmbalagem,
+        BigDecimal quantidadeEmbalagem,
+        UnidadeMedida unidadeEmbalagem) {
 
     public Dinheiro subtotal() {
-        return custoUnitario.multiplicar(quantidade);
+        if (tipo == TipoItemPrecificacao.PRODUTO) {
+            return CustoMaterialCalculos.custoUnitario(custoUnitario, quantidade);
+        }
+        if (modoCalculo == ModoCalculoMaterial.FRACIONADO) {
+            return CustoMaterialCalculos.custoFracionado(
+                    valorEmbalagem, quantidadeEmbalagem, unidadeEmbalagem, quantidade, unidadeMedida);
+        }
+        return CustoMaterialCalculos.custoUnitario(custoUnitario, quantidade);
     }
 
     public static ItemPrecificacao deInsumo(
-            UUID insumoId, String descricao, BigDecimal quantidade, UnidadeMedida unidade, Dinheiro custoUnitario) {
-        return new ItemPrecificacao(
-                UUID.randomUUID(), TipoItemPrecificacao.INSUMO, null, insumoId, descricao, quantidade, unidade, custoUnitario);
+            UUID insumoId,
+            String descricao,
+            BigDecimal quantidade,
+            UnidadeMedida unidade,
+            Dinheiro custoUnitario) {
+        return material(
+                TipoItemPrecificacao.INSUMO,
+                insumoId,
+                null,
+                descricao,
+                ModoCalculoMaterial.UNITARIO,
+                quantidade,
+                unidade,
+                custoUnitario,
+                null,
+                null,
+                null);
     }
 
     public static ItemPrecificacao deProduto(
@@ -34,21 +59,55 @@ public record ItemPrecificacao(
                 produtoId,
                 null,
                 descricao,
+                ModoCalculoMaterial.UNITARIO,
                 quantidade,
                 UnidadeMedida.UN,
-                custoUnitario);
+                custoUnitario,
+                null,
+                null,
+                null);
     }
 
     public static ItemPrecificacao extra(String descricao, BigDecimal quantidade, Dinheiro custoUnitario) {
-        return new ItemPrecificacao(
-                UUID.randomUUID(),
+        return material(
                 TipoItemPrecificacao.EXTRA,
                 null,
                 null,
                 descricao,
+                ModoCalculoMaterial.UNITARIO,
                 quantidade,
                 UnidadeMedida.UN,
-                custoUnitario);
+                custoUnitario,
+                null,
+                null,
+                null);
+    }
+
+    public static ItemPrecificacao material(
+            TipoItemPrecificacao tipo,
+            UUID insumoId,
+            UUID produtoId,
+            String descricao,
+            ModoCalculoMaterial modoCalculo,
+            BigDecimal quantidadeUsada,
+            UnidadeMedida unidadeUsada,
+            Dinheiro custoUnitario,
+            Dinheiro valorEmbalagem,
+            BigDecimal quantidadeEmbalagem,
+            UnidadeMedida unidadeEmbalagem) {
+        return new ItemPrecificacao(
+                UUID.randomUUID(),
+                tipo,
+                produtoId,
+                insumoId,
+                descricao,
+                modoCalculo == null ? ModoCalculoMaterial.UNITARIO : modoCalculo,
+                quantidadeUsada,
+                unidadeUsada,
+                custoUnitario == null ? Dinheiro.zero() : custoUnitario,
+                valorEmbalagem,
+                quantidadeEmbalagem,
+                unidadeEmbalagem);
     }
 
     public static ItemPrecificacao reconstituir(
@@ -57,10 +116,25 @@ public record ItemPrecificacao(
             UUID produtoId,
             UUID insumoId,
             String descricao,
+            ModoCalculoMaterial modoCalculo,
             BigDecimal quantidade,
             UnidadeMedida unidadeMedida,
-            Dinheiro custoUnitario) {
+            Dinheiro custoUnitario,
+            Dinheiro valorEmbalagem,
+            BigDecimal quantidadeEmbalagem,
+            UnidadeMedida unidadeEmbalagem) {
         return new ItemPrecificacao(
-                id, tipo, produtoId, insumoId, descricao, quantidade, unidadeMedida, custoUnitario);
+                id,
+                tipo,
+                produtoId,
+                insumoId,
+                descricao,
+                modoCalculo == null ? ModoCalculoMaterial.UNITARIO : modoCalculo,
+                quantidade,
+                unidadeMedida,
+                custoUnitario,
+                valorEmbalagem,
+                quantidadeEmbalagem,
+                unidadeEmbalagem);
     }
 }

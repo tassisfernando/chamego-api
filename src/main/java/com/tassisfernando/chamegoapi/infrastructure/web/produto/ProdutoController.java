@@ -97,6 +97,9 @@ public class ProdutoController {
 
     @PutMapping("/{id}")
     public ProdutoResposta atualizar(@PathVariable UUID id, @Valid @RequestBody AtualizarRequisicao requisicao) {
+        var receita = requisicao.receita() == null
+                ? null
+                : (requisicao.receita().isEmpty() ? List.<ItemReceita>of() : consolidarReceita(requisicao.receita()));
         Produto produto = atualizarProdutoUseCase.executar(new AtualizarProdutoComando(
                 id,
                 requisicao.nome(),
@@ -105,7 +108,8 @@ public class ProdutoController {
                 requisicao.pesoGramas(),
                 requisicao.precoVenda(),
                 requisicao.custoPadrao(),
-                requisicao.estoqueAtual()));
+                requisicao.estoqueAtual(),
+                receita));
         return ProdutoResposta.de(produto);
     }
 
@@ -125,7 +129,8 @@ public class ProdutoController {
             Integer pesoGramas,
             BigDecimal precoVenda,
             BigDecimal custoPadrao,
-            Integer estoqueAtual) {
+            Integer estoqueAtual,
+            List<ItemReceitaRequisicao> receita) {
     }
 
     public record ItemReceitaRequisicao(

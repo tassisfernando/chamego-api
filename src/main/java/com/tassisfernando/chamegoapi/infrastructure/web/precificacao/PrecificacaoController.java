@@ -10,6 +10,7 @@ import com.tassisfernando.chamegoapi.application.precificacao.SalvarPrecificacao
 import com.tassisfernando.chamegoapi.application.precificacao.SimularPrecificacaoUseCase;
 import com.tassisfernando.chamegoapi.domain.precificacao.Precificacao;
 import com.tassisfernando.chamegoapi.domain.precificacao.PrecificacaoRepository;
+import com.tassisfernando.chamegoapi.domain.precificacao.ModoCalculoMaterial;
 import com.tassisfernando.chamegoapi.domain.precificacao.TipoPrecificacao;
 import com.tassisfernando.chamegoapi.domain.precificacao.TipoItemPrecificacao;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
@@ -157,9 +158,13 @@ public class PrecificacaoController {
                         linha.produtoId(),
                         linha.insumoId(),
                         linha.descricao(),
+                        linha.modoCalculo(),
                         linha.quantidade(),
                         linha.unidadeMedida(),
-                        linha.custoUnitario()))
+                        linha.custoUnitario(),
+                        linha.valorEmbalagem(),
+                        linha.quantidadeEmbalagem(),
+                        linha.unidadeEmbalagem()))
                 .toList();
     }
 
@@ -185,7 +190,11 @@ public class PrecificacaoController {
             UUID produtoId,
             UUID insumoId,
             String descricao,
+            ModoCalculoMaterial modoCalculo,
             @NotNull BigDecimal quantidade,
             UnidadeMedida unidadeMedida,
-            BigDecimal custoUnitario) {}
+            BigDecimal custoUnitario,
+            BigDecimal valorEmbalagem,
+            BigDecimal quantidadeEmbalagem,
+            UnidadeMedida unidadeEmbalagem) {}
 }

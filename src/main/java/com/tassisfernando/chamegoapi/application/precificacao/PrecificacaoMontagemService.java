@@ -6,6 +6,7 @@ import com.tassisfernando.chamegoapi.domain.compartilhado.RegraDeNegocioViolada;
 import com.tassisfernando.chamegoapi.domain.insumo.Insumo;
 import com.tassisfernando.chamegoapi.domain.insumo.InsumoRepository;
 import com.tassisfernando.chamegoapi.domain.precificacao.ItemPrecificacao;
+import com.tassisfernando.chamegoapi.domain.precificacao.ModoCalculoMaterial;
 import com.tassisfernando.chamegoapi.domain.precificacao.PrecificacaoCalculos;
 import com.tassisfernando.chamegoapi.domain.precificacao.TipoItemPrecificacao;
 import com.tassisfernando.chamegoapi.domain.produto.ItemReceita;
@@ -65,20 +66,25 @@ public class PrecificacaoMontagemService {
         if (quantidade == null || quantidade.signum() <= 0) {
             throw new RegraDeNegocioViolada("quantidade do item de precificação deve ser positiva");
         }
+        ModoCalculoMaterial modo = comando.modoCalculo() == null ? ModoCalculoMaterial.UNITARIO : comando.modoCalculo();
+
         return switch (comando.tipo()) {
             case INSUMO -> {
                 Insumo insumo = insumoRepository
                         .buscarPorId(comando.insumoId())
                         .orElseThrow(() -> EntidadeNaoEncontrada.de("Insumo", comando.insumoId()));
-                Dinheiro unitario = comando.custoUnitarioInformado() != null
-                        ? Dinheiro.de(comando.custoUnitarioInformado())
-                        : insumo.custoMedio();
-                yield ItemPrecificacao.deInsumo(
+                yield montarMaterial(
+                        TipoItemPrecificacao.INSUMO,
                         insumo.id(),
+                        null,
                         insumo.nome(),
+                        modo,
                         quantidade,
                         comando.unidadeMedida() != null ? comando.unidadeMedida() : insumo.unidadeMedida(),
-                        unitario);
+                        comando.custoUnitarioInformado() != null
+                                ? Dinheiro.de(comando.custoUnitarioInformado())
+                                : insumo.custoMedio(),
+                        comando);
             }
             case PRODUTO -> {
                 Produto produto = produtoRepository
@@ -93,11 +99,62 @@ public class PrecificacaoMontagemService {
                 if (comando.descricao() == null || comando.descricao().isBlank()) {
                     throw new RegraDeNegocioViolada("descrição do item extra é obrigatória");
                 }
-                Dinheiro unitario = comando.custoUnitarioInformado() != null
-                        ? Dinheiro.de(comando.custoUnitarioInformado())
-                        : Dinheiro.zero();
-                yield ItemPrecificacao.extra(comando.descricao().trim(), quantidade, unitario);
+                yield montarMaterial(
+                        TipoItemPrecificacao.EXTRA,
+                        null,
+                        null,
+                        comando.descricao().trim(),
+                        modo,
+                        quantidade,
+                        comando.unidadeMedida() != null ? comando.unidadeMedida() : com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida.UN,
+                        comando.custoUnitarioInformado() != null
+                                ? Dinheiro.de(comando.custoUnitarioInformado())
+                                : Dinheiro.zero(),
+                        comando);
             }
         };
+    }
+
+    private ItemPrecificacao montarMaterial(
+            TipoItemPrecificacao tipo,
+            UUID insumoId,
+            UUID produtoId,
+            String descricao,
+            ModoCalculoMaterial modo,
+            BigDecimal quantidadeUsada,
+            com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida unidadeUsada,
+            Dinheiro custoUnitario,
+            LinhaPrecificacaoComando comando) {
+        if (modo == ModoCalculoMaterial.FRACIONADO) {
+            if (comando.valorEmbalagem() == null || comando.quantidadeEmbalagem() == null) {
+                throw new RegraDeNegocioViolada("modo fracionado exige valor e quantidade da embalagem");
+            }
+            return ItemPrecificacao.material(
+                    tipo,
+                    insumoId,
+                    produtoId,
+                    descricao,
+                    ModoCalculoMaterial.FRACIONADO,
+                    quantidadeUsada,
+                    unidadeUsada,
+                    Dinheiro.zero(),
+                    Dinheiro.de(comando.valorEmbalagem()),
+                    comando.quantidadeEmbalagem(),
+                    comando.unidadeEmbalagem() != null
+                            ? comando.unidadeEmbalagem()
+                            : unidadeUsada);
+        }
+        return ItemPrecificacao.material(
+                tipo,
+                insumoId,
+                produtoId,
+                descricao,
+                ModoCalculoMaterial.UNITARIO,
+                quantidadeUsada,
+                unidadeUsada,
+                custoUnitario,
+                null,
+                null,
+                null);
     }
 }

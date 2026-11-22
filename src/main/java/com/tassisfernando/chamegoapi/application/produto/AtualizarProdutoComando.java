@@ -1,8 +1,10 @@
 package com.tassisfernando.chamegoapi.application.produto;
 
 import com.tassisfernando.chamegoapi.domain.produto.CategoriaProduto;
+import com.tassisfernando.chamegoapi.domain.produto.ItemReceita;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public record AtualizarProdutoComando(
@@ -13,5 +15,5 @@ public record AtualizarProdutoComando(
         Integer pesoGramas,
         BigDecimal precoVenda,
         BigDecimal custoPadrao,
-        Integer estoqueAtual) {
-}
+        Integer estoqueAtual,
+        List<ItemReceita> receita) {}

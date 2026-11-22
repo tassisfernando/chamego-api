@@ -39,6 +39,10 @@ public class AtualizarProdutoUseCase {
                 Dinheiro.de(comando.precoVenda() == null ? produto.precoVenda().valor() : comando.precoVenda()),
                 Dinheiro.de(comando.custoPadrao() == null ? produto.custoPadrao().valor() : comando.custoPadrao()));
 
+        if (comando.receita() != null) {
+            produto.definirReceita(comando.receita());
+        }
+
         if (comando.estoqueAtual() != null && comando.estoqueAtual() != produto.estoqueAtual()) {
             int anterior = produto.estoqueAtual();
             int novo = comando.estoqueAtual();

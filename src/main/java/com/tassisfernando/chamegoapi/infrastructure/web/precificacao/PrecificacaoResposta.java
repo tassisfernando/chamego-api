@@ -50,9 +50,13 @@ record ItemResposta(
         UUID produtoId,
         UUID insumoId,
         String descricao,
+        String modoCalculo,
         BigDecimal quantidade,
         String unidadeMedida,
         BigDecimal custoUnitario,
+        BigDecimal valorEmbalagem,
+        BigDecimal quantidadeEmbalagem,
+        String unidadeEmbalagem,
         BigDecimal subtotal) {
 
     static ItemResposta de(ItemPrecificacao item) {
@@ -62,9 +66,13 @@ record ItemResposta(
                 item.produtoId(),
                 item.insumoId(),
                 item.descricao(),
+                item.modoCalculo() == null ? null : item.modoCalculo().name(),
                 item.quantidade(),
                 item.unidadeMedida() == null ? null : item.unidadeMedida().name(),
                 item.custoUnitario().valor(),
+                item.valorEmbalagem() == null ? null : item.valorEmbalagem().valor(),
+                item.quantidadeEmbalagem(),
+                item.unidadeEmbalagem() == null ? null : item.unidadeEmbalagem().name(),
                 item.subtotal().valor());
     }
 }

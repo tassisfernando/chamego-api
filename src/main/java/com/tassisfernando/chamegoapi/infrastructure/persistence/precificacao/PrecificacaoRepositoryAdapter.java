@@ -4,6 +4,7 @@ import com.tassisfernando.chamegoapi.domain.compartilhado.Dinheiro;
 import com.tassisfernando.chamegoapi.domain.compartilhado.Pagina;
 import com.tassisfernando.chamegoapi.domain.compartilhado.UnidadeMedida;
 import com.tassisfernando.chamegoapi.domain.precificacao.ItemPrecificacao;
+import com.tassisfernando.chamegoapi.domain.precificacao.ModoCalculoMaterial;
 import com.tassisfernando.chamegoapi.domain.precificacao.Precificacao;
 import com.tassisfernando.chamegoapi.domain.precificacao.PrecificacaoRepository;
 import com.tassisfernando.chamegoapi.domain.precificacao.TipoItemPrecificacao;
@@ -78,6 +79,14 @@ public class PrecificacaoRepositoryAdapter implements PrecificacaoRepository {
             linha.setUnidadeMedida(
                     item.unidadeMedida() == null ? null : item.unidadeMedida().name());
             linha.setCustoUnitario(item.custoUnitario().valor());
+            linha.setModoCalculo(
+                    item.modoCalculo() == null ? ModoCalculoMaterial.UNITARIO.name() : item.modoCalculo().name());
+            linha.setValorEmbalagem(
+                    item.valorEmbalagem() == null ? null : item.valorEmbalagem().valor());
+            linha.setQuantidadeEmbalagem(item.quantidadeEmbalagem());
+            linha.setUnidadeEmbalagem(
+                    item.unidadeEmbalagem() == null ? null : item.unidadeEmbalagem().name());
+            linha.setSubtotal(item.subtotal().valor());
             entidade.getItens().add(linha);
         }
         return entidade;
@@ -125,11 +134,19 @@ public class PrecificacaoRepositoryAdapter implements PrecificacaoRepository {
                         item.getProdutoId(),
                         item.getInsumoId(),
                         item.getDescricao(),
+                        item.getModoCalculo() == null
+                                ? ModoCalculoMaterial.UNITARIO
+                                : ModoCalculoMaterial.valueOf(item.getModoCalculo()),
                         item.getQuantidade(),
                         item.getUnidadeMedida() == null
                                 ? null
                                 : UnidadeMedida.valueOf(item.getUnidadeMedida()),
-                        Dinheiro.de(item.getCustoUnitario())))
+                        Dinheiro.de(item.getCustoUnitario()),
+                        item.getValorEmbalagem() == null ? null : Dinheiro.de(item.getValorEmbalagem()),
+                        item.getQuantidadeEmbalagem(),
+                        item.getUnidadeEmbalagem() == null
+                                ? null
+                                : UnidadeMedida.valueOf(item.getUnidadeEmbalagem())))
                 .toList();
     }
 }
