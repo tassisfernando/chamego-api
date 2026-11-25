@@ -45,4 +45,14 @@ public interface PedidoJpaRepository extends JpaRepository<PedidoJpaEntity, UUID
             LocalDate inicio, LocalDate fim, String status, Pageable pageable);
 
     List<PedidoJpaEntity> findByClienteId(UUID clienteId);
+
+    @Query(
+            """
+            select distinct p from PedidoJpaEntity p left join fetch p.itens
+            where p.dataEntrega is not null
+              and p.dataEntrega between :inicio and :fim
+              and p.status <> 'CANCELADO'
+            order by p.dataEntrega asc
+            """)
+    List<PedidoJpaEntity> listarPorDataEntrega(LocalDate inicio, LocalDate fim);
 }

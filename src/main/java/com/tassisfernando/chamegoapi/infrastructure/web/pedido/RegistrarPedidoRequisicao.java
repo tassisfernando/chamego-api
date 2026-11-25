@@ -20,6 +20,7 @@ public record RegistrarPedidoRequisicao(
         String observacao,
         @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal descontoPercentual,
         Boolean confirmarVenda,
+        LocalDate dataEntrega,
         @NotEmpty @Valid List<ItemRequisicao> itens) {
 
     public boolean confirmarVendaEfetivo() {

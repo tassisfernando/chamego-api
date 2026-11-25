@@ -38,7 +38,11 @@ public class RegistrarPedidoUseCase {
                 .orElseThrow(() -> EntidadeNaoEncontrada.de("Cliente", comando.clienteId()));
 
         Pedido pedido = Pedido.novo(
-                comando.clienteId(), comando.dataPedido(), comando.natureza(), comando.observacao());
+                comando.clienteId(),
+                comando.dataPedido(),
+                comando.natureza(),
+                comando.observacao(),
+                comando.dataEntrega());
         pedido.definirDescontoPedido(PercentualDesconto.de(comando.descontoPercentual()));
 
         for (ItemPedidoComando itemComando : comando.itens()) {

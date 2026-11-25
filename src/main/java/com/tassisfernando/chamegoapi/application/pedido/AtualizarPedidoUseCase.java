@@ -77,6 +77,7 @@ public class AtualizarPedidoUseCase {
                 comando.natureza() == null ? atual.natureza() : comando.natureza(),
                 comando.observacao(),
                 PercentualDesconto.de(comando.descontoPercentual()),
+                comando.dataEntrega(),
                 List.of());
 
         for (ItemPedido item : novosItens) {

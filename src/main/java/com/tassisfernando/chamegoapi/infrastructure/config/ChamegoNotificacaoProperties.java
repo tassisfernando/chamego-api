@@ -8,7 +8,11 @@ public record ChamegoNotificacaoProperties(
         Canal canal,
         String ownerEmail,
         String ownerWhatsapp,
-        String whatsappApiUrl) {
+        String ownerName,
+        String whatsappApiUrl,
+        String whatsappApiToken,
+        String whatsappInstance,
+        ProvedorWhatsApp whatsappProvider) {
 
     public enum Canal {
         LOG,
@@ -16,9 +20,33 @@ public record ChamegoNotificacaoProperties(
         WHATSAPP
     }
 
+    public enum ProvedorWhatsApp {
+        EVOLUTION,
+        ZAPI,
+        CLOUD
+    }
+
     public ChamegoNotificacaoProperties {
         if (canal == null) {
             canal = Canal.LOG;
+        }
+        if (ownerWhatsapp == null || ownerWhatsapp.isBlank()) {
+            ownerWhatsapp = "+5531989319621";
+        }
+        if (ownerName == null || ownerName.isBlank()) {
+            ownerName = "Maressa";
+        }
+        if (whatsappApiUrl == null) {
+            whatsappApiUrl = "";
+        }
+        if (whatsappApiToken == null) {
+            whatsappApiToken = "";
+        }
+        if (whatsappInstance == null) {
+            whatsappInstance = "";
+        }
+        if (whatsappProvider == null) {
+            whatsappProvider = ProvedorWhatsApp.EVOLUTION;
         }
     }
 

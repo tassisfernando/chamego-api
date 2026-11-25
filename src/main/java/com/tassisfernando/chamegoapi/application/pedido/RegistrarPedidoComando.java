@@ -14,5 +14,25 @@ public record RegistrarPedidoComando(
         String observacao,
         BigDecimal descontoPercentual,
         boolean confirmarVenda,
-        List<ItemPedidoComando> itens) {
+        List<ItemPedidoComando> itens,
+        LocalDate dataEntrega) {
+
+    public RegistrarPedidoComando(
+            UUID clienteId,
+            LocalDate dataPedido,
+            NaturezaPedido natureza,
+            String observacao,
+            BigDecimal descontoPercentual,
+            boolean confirmarVenda,
+            List<ItemPedidoComando> itens) {
+        this(
+                clienteId,
+                dataPedido,
+                natureza,
+                observacao,
+                descontoPercentual,
+                confirmarVenda,
+                itens,
+                null);
+    }
 }

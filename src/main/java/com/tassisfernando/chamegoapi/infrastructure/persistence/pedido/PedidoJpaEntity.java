@@ -36,6 +36,9 @@ public class PedidoJpaEntity {
     @Column(name = "desconto_percentual", nullable = false)
     private java.math.BigDecimal descontoPercentual = java.math.BigDecimal.ZERO;
 
+    @Column(name = "data_entrega")
+    private LocalDate dataEntrega;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemPedidoJpaEntity> itens = new ArrayList<>();
 
@@ -93,6 +96,14 @@ public class PedidoJpaEntity {
 
     public void setDescontoPercentual(java.math.BigDecimal descontoPercentual) {
         this.descontoPercentual = descontoPercentual;
+    }
+
+    public LocalDate getDataEntrega() {
+        return dataEntrega;
+    }
+
+    public void setDataEntrega(LocalDate dataEntrega) {
+        this.dataEntrega = dataEntrega;
     }
 
     public List<ItemPedidoJpaEntity> getItens() {

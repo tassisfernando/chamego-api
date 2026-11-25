@@ -15,5 +15,18 @@ public record AtualizarPedidoComando(
         StatusPedido status,
         String observacao,
         java.math.BigDecimal descontoPercentual,
-        List<ItemPedidoComando> itens) {
+        List<ItemPedidoComando> itens,
+        LocalDate dataEntrega) {
+
+    public AtualizarPedidoComando(
+            UUID id,
+            UUID clienteId,
+            LocalDate dataPedido,
+            NaturezaPedido natureza,
+            StatusPedido status,
+            String observacao,
+            java.math.BigDecimal descontoPercentual,
+            List<ItemPedidoComando> itens) {
+        this(id, clienteId, dataPedido, natureza, status, observacao, descontoPercentual, itens, null);
+    }
 }

@@ -23,5 +23,8 @@ public interface PedidoRepository {
 
     List<Pedido> listarPorCliente(UUID clienteId);
 
+    /** Pedidos não cancelados com {@code dataEntrega} no intervalo inclusivo. */
+    List<Pedido> listarPorDataEntrega(LocalDate inicio, LocalDate fim);
+
     void excluir(UUID id);
 }

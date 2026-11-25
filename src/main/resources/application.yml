@@ -49,8 +49,12 @@ chamego:
     habilitada: ${NOTIFICACOES_HABILITADAS:false}
     canal: ${NOTIFICATION_CHANNEL:LOG}
     owner-email: ${OWNER_NOTIFICATION_EMAIL:}
-    owner-whatsapp: ${OWNER_WHATSAPP_NUMBER:}
+    owner-whatsapp: ${OWNER_WHATSAPP_NUMBER:+5531989319621}
+    owner-name: ${OWNER_NAME:Maressa}
     whatsapp-api-url: ${WHATSAPP_API_URL:}
+    whatsapp-api-token: ${WHATSAPP_API_TOKEN:}
+    whatsapp-instance: ${WHATSAPP_INSTANCE:}
+    whatsapp-provider: ${WHATSAPP_PROVIDER:EVOLUTION}
 
 management:
   endpoints:

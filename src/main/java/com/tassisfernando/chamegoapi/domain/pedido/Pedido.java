@@ -18,6 +18,7 @@ public final class Pedido {
     private NaturezaPedido natureza;
     private String observacao;
     private PercentualDesconto descontoPercentual;
+    private LocalDate dataEntrega;
     private final List<ItemPedido> itens;
 
     private Pedido(
@@ -28,6 +29,7 @@ public final class Pedido {
             NaturezaPedido natureza,
             String observacao,
             PercentualDesconto descontoPercentual,
+            LocalDate dataEntrega,
             List<ItemPedido> itens) {
         if (clienteId == null) {
             throw new RegraDeNegocioViolada("cliente do pedido é obrigatório");
@@ -39,10 +41,20 @@ public final class Pedido {
         this.natureza = natureza == null ? NaturezaPedido.VENDA : natureza;
         this.observacao = observacao;
         this.descontoPercentual = descontoPercentual == null ? PercentualDesconto.zero() : descontoPercentual;
+        this.dataEntrega = dataEntrega;
         this.itens = new ArrayList<>(itens == null ? List.of() : itens);
     }
 
     public static Pedido novo(UUID clienteId, LocalDate dataPedido, NaturezaPedido natureza, String observacao) {
+        return novo(clienteId, dataPedido, natureza, observacao, null);
+    }
+
+    public static Pedido novo(
+            UUID clienteId,
+            LocalDate dataPedido,
+            NaturezaPedido natureza,
+            String observacao,
+            LocalDate dataEntrega) {
         return new Pedido(
                 UUID.randomUUID(),
                 clienteId,
@@ -51,6 +63,7 @@ public final class Pedido {
                 natureza,
                 observacao,
                 PercentualDesconto.zero(),
+                dataEntrega,
                 List.of());
     }
 
@@ -63,7 +76,30 @@ public final class Pedido {
             String observacao,
             PercentualDesconto descontoPercentual,
             List<ItemPedido> itens) {
-        return new Pedido(id, clienteId, dataPedido, status, natureza, observacao, descontoPercentual, itens);
+        return reconstituir(
+                id, clienteId, dataPedido, status, natureza, observacao, descontoPercentual, null, itens);
+    }
+
+    public static Pedido reconstituir(
+            UUID id,
+            UUID clienteId,
+            LocalDate dataPedido,
+            StatusPedido status,
+            NaturezaPedido natureza,
+            String observacao,
+            PercentualDesconto descontoPercentual,
+            LocalDate dataEntrega,
+            List<ItemPedido> itens) {
+        return new Pedido(
+                id,
+                clienteId,
+                dataPedido,
+                status,
+                natureza,
+                observacao,
+                descontoPercentual,
+                dataEntrega,
+                itens);
     }
 
     public void adicionarItem(ItemPedido item) {
@@ -74,6 +110,11 @@ public final class Pedido {
     public void definirDescontoPedido(PercentualDesconto desconto) {
         garantirAlteravel();
         this.descontoPercentual = desconto == null ? PercentualDesconto.zero() : desconto;
+    }
+
+    /** Data combinada com a cliente. Pode ser ajustada mesmo depois da confirmação. */
+    public void definirDataEntrega(LocalDate dataEntrega) {
+        this.dataEntrega = dataEntrega;
     }
 
     public void confirmar() {
@@ -182,6 +223,10 @@ public final class Pedido {
 
     public PercentualDesconto descontoPercentual() {
         return descontoPercentual;
+    }
+
+    public LocalDate dataEntrega() {
+        return dataEntrega;
     }
 
     public List<ItemPedido> itens() {

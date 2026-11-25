@@ -71,10 +71,12 @@ class RegistrarPedidoUseCaseTest {
                 null,
                 null,
                 true,
-                List.of(new ItemPedidoComando(produto.id(), 2, null, null))));
+                List.of(new ItemPedidoComando(produto.id(), 2, null, null)),
+                LocalDate.of(2026, 1, 30)));
 
         assertEquals(StatusPedido.CONFIRMADO, pedido.status());
         assertEquals(brl("65.80"), pedido.valorTotal());
+        assertEquals(LocalDate.of(2026, 1, 30), pedido.dataEntrega());
         assertEquals(3, produto.estoqueAtual());
         verify(produtoRepository).salvar(produto);
         verify(movimentoEstoqueRepository).salvar(any());

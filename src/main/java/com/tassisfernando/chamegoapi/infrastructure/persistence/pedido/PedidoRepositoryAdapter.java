@@ -75,6 +75,11 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
     }
 
     @Override
+    public List<Pedido> listarPorDataEntrega(LocalDate inicio, LocalDate fim) {
+        return jpaRepository.listarPorDataEntrega(inicio, fim).stream().map(this::paraDominio).toList();
+    }
+
+    @Override
     public void excluir(UUID id) {
         jpaRepository.deleteById(id);
     }
@@ -88,6 +93,7 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
         entidade.setNatureza(pedido.natureza().name());
         entidade.setObservacao(pedido.observacao());
         entidade.setDescontoPercentual(pedido.descontoPercentual().valor());
+        entidade.setDataEntrega(pedido.dataEntrega());
         entidade.getItens().clear();
         for (ItemPedido item : pedido.itens()) {
             ItemPedidoJpaEntity linha = new ItemPedidoJpaEntity();
@@ -120,6 +126,7 @@ public class PedidoRepositoryAdapter implements PedidoRepository {
                 NaturezaPedido.valueOf(entidade.getNatureza()),
                 entidade.getObservacao(),
                 PercentualDesconto.de(entidade.getDescontoPercentual()),
+                entidade.getDataEntrega(),
                 itens);
     }
 }

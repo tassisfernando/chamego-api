@@ -4,6 +4,8 @@ import com.tassisfernando.chamegoapi.application.pedido.AtualizarPedidoComando;
 import com.tassisfernando.chamegoapi.application.pedido.AtualizarPedidoUseCase;
 import com.tassisfernando.chamegoapi.application.pedido.ConverterOrcamentoEmVendaUseCase;
 import com.tassisfernando.chamegoapi.application.pedido.ExcluirPedidoUseCase;
+import com.tassisfernando.chamegoapi.application.pedido.ListarEntregasAgendadasUseCase;
+import com.tassisfernando.chamegoapi.application.pedido.PainelEntregas;
 import com.tassisfernando.chamegoapi.application.pedido.RegistrarPedidoComando;
 import com.tassisfernando.chamegoapi.application.pedido.RegistrarPedidoUseCase;
 import com.tassisfernando.chamegoapi.domain.compartilhado.PeriodoOperacao;
@@ -47,18 +49,28 @@ public class PedidoController {
     private final ConverterOrcamentoEmVendaUseCase converterOrcamentoEmVendaUseCase;
     private final ExcluirPedidoUseCase excluirPedidoUseCase;
     private final PedidoRepository pedidoRepository;
+    private final ListarEntregasAgendadasUseCase listarEntregasAgendadasUseCase;
 
     public PedidoController(
             RegistrarPedidoUseCase registrarPedidoUseCase,
             AtualizarPedidoUseCase atualizarPedidoUseCase,
             ConverterOrcamentoEmVendaUseCase converterOrcamentoEmVendaUseCase,
             ExcluirPedidoUseCase excluirPedidoUseCase,
-            PedidoRepository pedidoRepository) {
+            PedidoRepository pedidoRepository,
+            ListarEntregasAgendadasUseCase listarEntregasAgendadasUseCase) {
         this.registrarPedidoUseCase = registrarPedidoUseCase;
         this.atualizarPedidoUseCase = atualizarPedidoUseCase;
         this.converterOrcamentoEmVendaUseCase = converterOrcamentoEmVendaUseCase;
         this.excluirPedidoUseCase = excluirPedidoUseCase;
         this.pedidoRepository = pedidoRepository;
+        this.listarEntregasAgendadasUseCase = listarEntregasAgendadasUseCase;
+    }
+
+    @GetMapping("/entregas/painel")
+    public PainelEntregas painelEntregas(@RequestParam(required = false) Integer horizonteDias) {
+        return listarEntregasAgendadasUseCase.executar(
+                LocalDate.now(ListarEntregasAgendadasUseCase.FUSO_OPERACAO),
+                horizonteDias == null ? ListarEntregasAgendadasUseCase.HORIZONTE_PADRAO_DIAS : horizonteDias);
     }
 
     @GetMapping
@@ -88,7 +100,8 @@ public class PedidoController {
                 requisicao.observacao(),
                 requisicao.descontoPercentual(),
                 requisicao.confirmarVendaEfetivo(),
-                requisicao.itens().stream().map(RegistrarPedidoRequisicao.ItemRequisicao::paraComando).toList()));
+                requisicao.itens().stream().map(RegistrarPedidoRequisicao.ItemRequisicao::paraComando).toList(),
+                requisicao.dataEntrega()));
         return PedidoResposta.de(pedido);
     }
 
@@ -108,7 +121,8 @@ public class PedidoController {
                 requisicao.status(),
                 requisicao.observacao(),
                 requisicao.descontoPercentual(),
-                requisicao.itens().stream().map(RegistrarPedidoRequisicao.ItemRequisicao::paraComando).toList()));
+                requisicao.itens().stream().map(RegistrarPedidoRequisicao.ItemRequisicao::paraComando).toList(),
+                requisicao.dataEntrega()));
         return PedidoResposta.de(pedido);
     }
 
@@ -125,6 +139,7 @@ public class PedidoController {
             StatusPedido status,
             String observacao,
             @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal descontoPercentual,
+            LocalDate dataEntrega,
             @NotEmpty @Valid List<RegistrarPedidoRequisicao.ItemRequisicao> itens) {
     }
 
@@ -139,6 +154,7 @@ public class PedidoController {
             BigDecimal subtotalItens,
             BigDecimal valorTotal,
             BigDecimal lucroBruto,
+            LocalDate dataEntrega,
             List<ItemResposta> itens) {
 
         static PedidoResposta de(Pedido pedido) {
@@ -153,6 +169,7 @@ public class PedidoController {
                     pedido.subtotalItens().valor(),
                     pedido.valorTotal().valor(),
                     pedido.lucroBruto().valor(),
+                    pedido.dataEntrega(),
                     pedido.itens().stream().map(ItemResposta::de).toList());
         }
     }
