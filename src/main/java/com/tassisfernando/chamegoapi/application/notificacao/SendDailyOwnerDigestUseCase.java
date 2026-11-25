@@ -6,6 +6,7 @@ import com.tassisfernando.chamegoapi.domain.pedido.ItemPedido;
 import com.tassisfernando.chamegoapi.domain.pedido.Pedido;
 import com.tassisfernando.chamegoapi.domain.pedido.PedidoRepository;
 import com.tassisfernando.chamegoapi.domain.produto.ProdutoRepository;
+import com.tassisfernando.chamegoapi.infrastructure.config.ChamegoDigestNotificacaoProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,20 +27,26 @@ public class SendDailyOwnerDigestUseCase {
     private final ClienteRepository clienteRepository;
     private final PedidoRepository pedidoRepository;
     private final ProdutoRepository produtoRepository;
+    private final EmailNotificationPort emailNotificationPort;
     private final WhatsAppNotificationPort whatsAppNotificationPort;
     private final DestinoResumoDiarioPort destinoResumoDiarioPort;
+    private final ChamegoDigestNotificacaoProperties digestProperties;
 
     public SendDailyOwnerDigestUseCase(
             ClienteRepository clienteRepository,
             PedidoRepository pedidoRepository,
             ProdutoRepository produtoRepository,
+            EmailNotificationPort emailNotificationPort,
             WhatsAppNotificationPort whatsAppNotificationPort,
-            DestinoResumoDiarioPort destinoResumoDiarioPort) {
+            DestinoResumoDiarioPort destinoResumoDiarioPort,
+            ChamegoDigestNotificacaoProperties digestProperties) {
         this.clienteRepository = clienteRepository;
         this.pedidoRepository = pedidoRepository;
         this.produtoRepository = produtoRepository;
+        this.emailNotificationPort = emailNotificationPort;
         this.whatsAppNotificationPort = whatsAppNotificationPort;
         this.destinoResumoDiarioPort = destinoResumoDiarioPort;
+        this.digestProperties = digestProperties;
     }
 
     @Transactional(readOnly = true)
@@ -61,14 +68,63 @@ public class SendDailyOwnerDigestUseCase {
                         cliente.nome(), cliente.telefone()))
                 .toList();
         var linhasEntrega = resumirEntregas(entregas);
-        var mensagem = MensagemResumoDiarioProprietaria.montar(
-                destinoResumoDiarioPort.nomeProprietaria(), referencia, linhasAniversario, linhasEntrega);
-        if (mensagem.isEmpty()) {
-            return new Resultado(referencia, linhasAniversario.size(), linhasEntrega.size(), false, false);
+        String proprietaria = destinoResumoDiarioPort.nomeProprietaria();
+        var texto = MensagemResumoDiarioProprietaria.montar(proprietaria, referencia, linhasAniversario, linhasEntrega);
+        if (texto.isEmpty()) {
+            return new Resultado(
+                    referencia,
+                    linhasAniversario.size(),
+                    linhasEntrega.size(),
+                    false,
+                    false,
+                    false,
+                    "NENHUM",
+                    digestProperties.emailProprietaria());
         }
-        boolean entregue = whatsAppNotificationPort.enviarTexto(
-                destinoResumoDiarioPort.whatsappProprietaria(), mensagem.get());
-        return new Resultado(referencia, linhasAniversario.size(), linhasEntrega.size(), true, entregue);
+        String assunto = MensagemResumoDiarioProprietaria.assunto(referencia);
+        String html = MensagemResumoDiarioProprietaria.montarHtml(
+                        proprietaria, referencia, linhasAniversario, linhasEntrega)
+                .orElse(texto.get());
+
+        boolean entregueEmail = false;
+        boolean entregueWhatsapp = false;
+
+        if (digestProperties.emailEnabled()) {
+            entregueEmail = emailNotificationPort.enviarResumo(
+                    digestProperties.emailProprietaria(), assunto, texto.get(), html);
+        }
+        if (digestProperties.whatsappEnabled()) {
+            entregueWhatsapp = whatsAppNotificationPort.enviarTexto(
+                    destinoResumoDiarioPort.whatsappProprietaria(), texto.get());
+        }
+
+        String canal = resolverCanal(entregueEmail, entregueWhatsapp);
+
+        return new Resultado(
+                referencia,
+                linhasAniversario.size(),
+                linhasEntrega.size(),
+                true,
+                entregueEmail,
+                entregueWhatsapp,
+                canal,
+                digestProperties.emailProprietaria());
+    }
+
+    private String resolverCanal(boolean entregueEmail, boolean entregueWhatsapp) {
+        if (entregueEmail) {
+            return "EMAIL";
+        }
+        if (entregueWhatsapp) {
+            return "WHATSAPP";
+        }
+        if (digestProperties.emailEnabled()) {
+            return "EMAIL";
+        }
+        if (digestProperties.whatsappEnabled()) {
+            return "WHATSAPP";
+        }
+        return "LOG";
     }
 
     private List<MensagemResumoDiarioProprietaria.EntregaLinha> resumirEntregas(List<Pedido> entregas) {
@@ -103,5 +159,14 @@ public class SendDailyOwnerDigestUseCase {
             int aniversariantes,
             int entregas,
             boolean notificacaoEnviada,
-            boolean entreguePelaApi) {}
+            boolean entreguePorEmail,
+            boolean entreguePorWhatsapp,
+            String canal,
+            String emailDestino) {
+
+        /** Compatibilidade com respostas antigas focadas em WhatsApp. */
+        public boolean entreguePelaApi() {
+            return entreguePorWhatsapp;
+        }
+    }
 }

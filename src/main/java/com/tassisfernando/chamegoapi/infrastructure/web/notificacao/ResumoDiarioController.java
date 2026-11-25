@@ -25,6 +25,10 @@ public class ResumoDiarioController {
                 "aniversariantes", resultado.aniversariantes(),
                 "entregas", resultado.entregas(),
                 "notificacaoEnviada", resultado.notificacaoEnviada(),
-                "entreguePelaApi", resultado.entreguePelaApi());
+                "entreguePorEmail", resultado.entreguePorEmail(),
+                "entreguePorWhatsapp", resultado.entreguePorWhatsapp(),
+                "entreguePelaApi", resultado.entreguePelaApi(),
+                "canal", resultado.canal(),
+                "emailDestino", resultado.emailDestino());
     }
 }

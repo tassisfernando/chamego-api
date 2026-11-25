@@ -57,6 +57,21 @@ class MensagemResumoDiarioProprietariaTest {
     }
 
     @Test
+    void htmlIncluiLinksWaMeClicaveis() {
+        String html = MensagemResumoDiarioProprietaria.montarHtml(
+                        "Maressa",
+                        hoje,
+                        List.of(new MensagemResumoDiarioProprietaria.AniversarianteLinha("Helena", "31988887777")),
+                        List.of(entrega()))
+                .orElseThrow();
+
+        assertTrue(html.contains("<a href=\"https://wa.me/5531988887777\""));
+        assertTrue(html.contains("<a href=\"https://wa.me/5531999990000\""));
+        assertTrue(html.contains("Aniversariantes de Hoje"));
+        assertTrue(html.contains("Entregas Agendadas para Hoje"));
+    }
+
+    @Test
     void naoMontaMensagemVazia() {
         assertTrue(MensagemResumoDiarioProprietaria.montar("Maressa", hoje, List.of(), List.of()).isEmpty());
         assertTrue(MensagemResumoDiarioProprietaria.montar("Maressa", hoje, null, null).isEmpty());

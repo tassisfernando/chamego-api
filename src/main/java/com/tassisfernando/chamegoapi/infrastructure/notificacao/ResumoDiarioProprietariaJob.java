@@ -30,10 +30,12 @@ public class ResumoDiarioProprietariaJob {
                 return;
             }
             LOG.info(
-                    "Resumo das 7h preparado ({} aniversariante(s), {} entrega(s), api={}).",
+                    "Resumo das 7h preparado ({} aniversariante(s), {} entrega(s), canal={}, email={}, whatsapp={}).",
                     resultado.aniversariantes(),
                     resultado.entregas(),
-                    resultado.entreguePelaApi());
+                    resultado.canal(),
+                    resultado.entreguePorEmail(),
+                    resultado.entreguePorWhatsapp());
         } catch (RuntimeException ex) {
             LOG.error("Falha no resumo diário das 7h: {}", ex.getMessage(), ex);
         }
