@@ -26,6 +26,9 @@ management:
   health:
     db:
       enabled: false
+    # O Render não alcança smtp.gmail.com:587; o probe levava ~135s e falhava o deploy.
+    mail:
+      enabled: false
 
 logging:
   level:
